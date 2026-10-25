@@ -1,0 +1,1798 @@
+<!doctype html>
+<html lang="en" data-theme="boardroom">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1218">
+<meta name="description" content="Fortnite Dynamic Map — interactive Chapter 7 Season 4 map with layers, drop calculator, loot-route AI and saved route slots.">
+<title>Fortnite Dynamic Map</title>
+<style>
+:root{
+  --font:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --serif:'Cinzel','Trajan Pro','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;--r2:6px;
+}
+[data-theme=boardroom]{--bg:#0c1117;--bg2:#10171f;--panel:#141c26;--panel2:#19232f;--line:#232f3e;--line2:#2f3e52;--text:#e6ebf1;--muted:#8e9bac;--dim:#617084;--gold:#d3ad58;--gold2:#f1d68e;--arc:#53b8c6;--danger:#e5655b;--ok:#5cc48b;--warn:#e7a948;--shadow:0 12px 32px rgba(0,0,0,.38);--water:#163a56;--chip:#1d2836}
+[data-theme=parchment]{--bg:#efe9dc;--bg2:#e7dfcd;--panel:#fbf8f1;--panel2:#f3eee2;--line:#dcd2bd;--line2:#cbbd9f;--text:#1f242b;--muted:#665f52;--dim:#8f8674;--gold:#946519;--gold2:#b8862f;--arc:#2c6d78;--danger:#b8433a;--ok:#2f8a57;--warn:#b07418;--shadow:0 10px 26px rgba(70,55,25,.16);--water:#2a5e7c;--chip:#ece4d2}
+[data-theme=arcane]{--bg:#0f0c1a;--bg2:#141024;--panel:#19142c;--panel2:#201a38;--line:#2c2548;--line2:#3b3260;--text:#ece8f8;--muted:#a097c0;--dim:#6f6795;--gold:#c9a8ff;--gold2:#e6d6ff;--arc:#5fd6c6;--danger:#ff6b7f;--ok:#5fd69a;--warn:#f1b65a;--shadow:0 12px 34px rgba(0,0,0,.45);--water:#1c2a52;--chip:#231d3d}
+[data-theme=nitemare]{--bg:#120c09;--bg2:#181009;--panel:#1d140f;--panel2:#251a13;--line:#36261b;--line2:#4a3424;--text:#f5ebe2;--muted:#b49d8a;--dim:#7d6a5b;--gold:#ff8f2e;--gold2:#ffc27a;--arc:#a771ff;--danger:#ff5a4f;--ok:#7bd36b;--warn:#ffb347;--shadow:0 12px 34px rgba(0,0,0,.5);--water:#221836;--chip:#2a1d15}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--arc)}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ---------- top bar ---------- */
+.topbar{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:0 16px;height:58px;background:linear-gradient(180deg,var(--panel),var(--bg2));border-bottom:1px solid var(--line);position:relative;z-index:30}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold2) 50%,var(--gold) 70%,transparent);opacity:.55}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;background:none;border:0;padding:0}
+.brand svg{flex:0 0 auto}
+.brand-txt{display:flex;flex-direction:column;line-height:1.1;min-width:0;text-align:left}
+.brand-name{font-family:var(--serif);font-weight:700;letter-spacing:.08em;font-size:15px;text-transform:uppercase;white-space:nowrap;color:var(--text)}
+.brand-sub{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.nav{display:flex;gap:2px;margin-left:auto;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.nav button{background:none;border:0;padding:7px 12px;border-radius:6px;color:var(--muted);font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.nav button:hover{color:var(--text)}
+.nav button.on{background:var(--panel2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.nav button.on svg{color:var(--gold)}
+.nav svg{width:16px;height:16px}
+
+/* ---------- views ---------- */
+#views{flex:1 1 auto;position:relative;min-height:0}
+.view{position:absolute;inset:0;display:none;overflow:auto;-webkit-overflow-scrolling:touch}
+.view.on{display:block}
+#v-map.on{display:flex;overflow:hidden}
+.page{max-width:1180px;margin:0 auto;padding:22px 18px 40px}
+
+/* ---------- typography / common ---------- */
+h1,h2,h3{font-family:var(--serif);letter-spacing:.06em;margin:0;font-weight:700}
+h1{font-size:28px}
+h2{font-size:17px;text-transform:uppercase}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold)}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}.dim{color:var(--dim)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.rule{display:flex;align-items:center;gap:10px;margin:22px 0 14px}
+.rule::before,.rule::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line2))}
+.rule::after{background:linear-gradient(90deg,var(--line2),transparent)}
+.rule span{font-family:var(--serif);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:8px}
+.rule span::before,.rule span::after{content:"◆";font-size:7px;opacity:.7}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative}
+.card.crest::before,.card.crest::after{content:"";position:absolute;width:12px;height:12px;border:1.5px solid var(--gold);opacity:.6;pointer-events:none}
+.card.crest::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-top-left-radius:var(--r)}
+.card.crest::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-bottom-right-radius:var(--r)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);font-weight:600;font-size:13px;color:var(--text);transition:border-color .15s,background .15s;white-space:nowrap;min-height:36px}
+.btn:hover{border-color:var(--gold)}
+.btn.pri{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a1408;border-color:var(--gold)}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,var(--line2))}
+.btn.sm{padding:5px 9px;font-size:12px;min-height:30px}
+.btn.on{border-color:var(--gold);color:var(--gold2);background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}
+.btn svg{width:15px;height:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stack>*+*{margin-top:10px}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.inp,select.inp{width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--line2);background:var(--bg2);min-height:36px}
+.inp:focus{outline:none;border-color:var(--gold)}
+input[type=range]{width:100%;accent-color:var(--gold)}
+
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.kpi .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi .s{font-size:11.5px;color:var(--dim)}
+.kpi.gold .v{color:var(--gold2)}
+
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--chip);border:1px solid var(--line2);color:var(--muted)}
+.tag.gold{color:var(--gold2);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.tag.red{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+.tag.arc{color:var(--arc);border-color:color-mix(in srgb,var(--arc) 45%,transparent)}
+.tag.est{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line2)}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.t tr.click{cursor:pointer}
+table.t tr.click:hover td{background:var(--panel2)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;min-width:50px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.bar.red i{background:linear-gradient(90deg,var(--warn),var(--danger))}
+
+/* switch */
+.sw{position:relative;display:inline-block;width:36px;height:20px;flex:0 0 auto}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw i{position:absolute;inset:0;border-radius:999px;background:var(--line2);transition:.18s}
+.sw i::after{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;background:var(--muted);transition:.18s}
+.sw input:checked+i{background:color-mix(in srgb,var(--gold) 55%,var(--line2))}
+.sw input:checked+i::after{transform:translateX(16px);background:var(--gold2)}
+.sw input:focus-visible+i{outline:2px solid var(--arc);outline-offset:2px}
+
+/* ---------- home ---------- */
+.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:stretch}
+.hero-main{background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--gold) 14%,transparent),transparent 55%),radial-gradient(90% 120% at 100% 100%,color-mix(in srgb,var(--arc) 12%,transparent),transparent 60%),var(--panel);padding:24px}
+.hero-main p{color:var(--muted);max-width:56ch;margin:10px 0 18px}
+.count{display:flex;gap:8px;margin-top:8px}
+.count div{flex:1;text-align:center;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px 4px}
+.count b{display:block;font-size:22px;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.count span{font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.tile{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition:border-color .15s,transform .15s;color:var(--text)}
+.tile:hover{border-color:var(--gold);transform:translateY(-1px)}
+.tile .ic{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 14%,var(--panel2));color:var(--gold2);border:1px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+.tile .ic svg{width:19px;height:19px}
+.tile b{font-size:14px}
+.tile span{font-size:12.5px;color:var(--muted)}
+.notice{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--panel));padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:var(--muted)}
+.notice b{color:var(--text)}
+
+/* ---------- map view ---------- */
+.map-wrap{position:relative;flex:1 1 auto;min-width:0;background:var(--water);overflow:hidden;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;user-select:none;-webkit-user-select:none}
+#map.grabbing{cursor:grabbing}
+#map.crosshair{cursor:crosshair}
+.map-wrap.nitemare #terrain{filter:hue-rotate(-28deg) saturate(1.25) brightness(.78) contrast(1.05)}
+#nm-overlay{display:none;pointer-events:none}
+.map-wrap.nitemare #nm-overlay{display:inline}
+.map-loading{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:var(--gold2);font-family:var(--serif);letter-spacing:.2em;text-transform:uppercase;font-size:12px}
+.map-loading.gone{display:none}
+
+.mk{cursor:pointer}
+.mk .hit{fill:transparent}
+.mlbl{font-family:var(--font);font-weight:800;letter-spacing:.06em;text-transform:uppercase;paint-order:stroke;stroke:rgba(8,12,18,.85);stroke-width:3.2px;stroke-linejoin:round;fill:#fff;pointer-events:none}
+.mlbl.poi{font-size:12.5px}
+.mlbl.lm{font-size:9.5px;font-weight:700;fill:#e9eef4;letter-spacing:.04em}
+.mlbl.sm{font-size:9px;fill:#ffe6a6}
+svg[data-z="0"] .zlm{display:none}
+svg[data-z="0"] .zlm2,svg[data-z="1"] .zlm2{display:none}
+.focus-dim .mk:not(.inroute),.focus-dim .lblg:not(.inroute){opacity:.28}
+.sel-ring{fill:none;stroke:#fff;stroke-width:2;stroke-dasharray:4 3;animation:spin 6s linear infinite}
+@keyframes spin{to{stroke-dashoffset:-70}}
+.pulse{animation:pulse 1.6s ease-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pulse{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(2.2)}}
+.dash-move{animation:dash 1.2s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-24}}
+.scan-ring{fill:none;stroke:var(--arc);stroke-width:2;opacity:.9}
+
+.enh{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.enh-grp{display:flex;flex-direction:column;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line2);border-radius:9px;overflow:hidden;box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+.enh button{width:38px;height:36px;display:grid;place-items:center;background:none;border:0;border-bottom:1px solid var(--line);color:var(--muted);position:relative}
+.enh button:last-child{border-bottom:0}
+.enh button:hover{color:var(--text);background:var(--panel2)}
+.enh button.on{color:var(--gold2);background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.enh button.on::before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--gold);border-radius:2px}
+.enh svg{width:17px;height:17px}
+.enh button[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:44px;top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--panel);border:1px solid var(--line2);padding:4px 8px;border-radius:6px;font-size:12px;color:var(--text);pointer-events:none;z-index:10}
+
+.hud{position:absolute;left:12px;bottom:12px;display:flex;gap:6px;z-index:5;flex-wrap:wrap;pointer-events:none}
+.hud .chip{background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line2);border-radius:7px;padding:4px 9px;font:600 11.5px var(--mono);color:var(--muted);backdrop-filter:blur(6px)}
+.hud .chip b{color:var(--text)}
+.scalebar{display:flex;align-items:center;gap:6px}
+.scalebar i{display:block;height:5px;border:1.5px solid var(--text);border-top:0}
+.modebar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;display:none;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--gold);border-radius:9px;padding:6px 6px 6px 12px;box-shadow:var(--shadow);font-size:13px;font-weight:600;max-width:calc(100% - 120px)}
+.modebar.on{display:flex}
+.modebar .dotp{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 25%,transparent);flex:0 0 auto}
+.zoomctl{position:absolute;right:12px;bottom:12px;z-index:5}
+.mobile-panel-toggle{display:none}
+
+/* side panel */
+.panel{flex:0 0 380px;display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);min-height:0;z-index:8}
+.ptabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;flex:0 0 auto;background:var(--bg2)}
+.ptabs::-webkit-scrollbar{display:none}
+.ptabs button{flex:1 0 auto;background:none;border:0;padding:11px 10px 10px;color:var(--muted);font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;justify-content:center}
+.ptabs button svg{width:14px;height:14px}
+.ptabs button.on{color:var(--text);border-bottom-color:var(--gold)}
+.ptabs button.on svg{color:var(--gold)}
+.pbody{flex:1 1 auto;overflow:auto;padding:14px;min-height:0}
+.pane{display:none}
+.pane.on{display:block}
+.sec{margin-bottom:16px}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.lrow{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow .sw{margin-left:auto}
+.lrow .lic{width:22px;height:22px;flex:0 0 auto;display:grid;place-items:center}
+.lrow .lt{display:flex;flex-direction:column;line-height:1.2}
+.lrow .lt b{font-size:13px}
+.lrow .lt span{font-size:11.5px;color:var(--dim)}
+.searchbox{position:relative}
+.searchbox .inp{padding-left:32px}
+.searchbox svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--dim)}
+.sresults{margin-top:6px;border:1px solid var(--line2);border-radius:8px;overflow:hidden;display:none}
+.sresults.on{display:block}
+.sresults button{display:flex;width:100%;justify-content:space-between;background:var(--panel2);border:0;border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}
+.sresults button:hover{background:var(--line)}
+
+.info-head{display:flex;gap:12px;align-items:flex-start}
+.info-ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;border:1px solid var(--line2);background:var(--panel2)}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.statgrid .kpi .v{font-size:17px}
+.note{font-size:13px;color:var(--muted);border-left:2px solid var(--gold);padding:2px 0 2px 10px;margin:10px 0}
+.boss{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));background:color-mix(in srgb,var(--danger) 7%,var(--panel2));border-radius:8px;margin:8px 0}
+.vault{border-color:color-mix(in srgb,var(--gold) 40%,var(--line));background:color-mix(in srgb,var(--gold) 7%,var(--panel2))}
+
+.wp{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin-bottom:6px}
+.wp .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#1a1408;font-weight:800;font-size:11px;flex:0 0 auto}
+.wp .wn{flex:1;min-width:0;line-height:1.2}
+.wp .wn b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wp .wn span{font-size:11px;color:var(--dim)}
+.icon-btn{width:28px;height:28px;display:grid;place-items:center;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--muted);flex:0 0 auto}
+.icon-btn:hover{color:var(--text);border-color:var(--gold)}
+.icon-btn svg{width:14px;height:14px}
+
+.console{font:12px/1.55 var(--mono);background:#06090d;color:#9fe3d6;border:1px solid var(--line2);border-radius:8px;padding:10px;height:150px;overflow:auto;white-space:pre-wrap}
+[data-theme=parchment] .console{background:#1b2027}
+.console .g{color:#f1d68e}.console .d{color:#6d7f8f}.console .r{color:#ff8b80}
+.timer{font:800 46px/1 var(--mono);text-align:center;letter-spacing:.02em;font-variant-numeric:tabular-nums;padding:14px 0 6px}
+.timer.jump{color:var(--ok);animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{flex:1;background:var(--bg2);border:0;border-right:1px solid var(--line2);padding:7px 8px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:color-mix(in srgb,var(--gold) 16%,var(--panel2));color:var(--gold2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipb{border:1px solid var(--line2);background:var(--panel2);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+.chipb.on{color:var(--text);border-color:var(--gold)}
+.chipb i{width:9px;height:9px;border-radius:50%;display:block}
+.empty{padding:18px;text-align:center;color:var(--dim);font-size:13px;border:1px dashed var(--line2);border-radius:8px}
+
+/* slots */
+.slot{display:flex;flex-direction:column;gap:10px}
+.slot .pv{aspect-ratio:1/1;border-radius:8px;background:var(--water);overflow:hidden;border:1px solid var(--line2);position:relative}
+.slot .pv svg{width:100%;height:100%;display:block}
+.slot .pv .badge{position:absolute;top:8px;left:8px}
+.slot.emptyslot .pv{display:grid;place-items:center;color:var(--dim);background:repeating-linear-gradient(45deg,var(--panel2) 0 10px,var(--panel) 10px 20px)}
+
+/* settings */
+.themes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.theme-card{border:1px solid var(--line2);border-radius:10px;padding:10px;background:var(--panel2);text-align:left;display:flex;flex-direction:column;gap:8px}
+.theme-card.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.theme-card .sw4{display:flex;height:26px;border-radius:6px;overflow:hidden}
+.theme-card .sw4 i{flex:1}
+.theme-card b{font-size:13px}
+.datatable{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.datatable input{width:70px;padding:4px 6px;border-radius:5px;border:1px solid var(--line2);background:var(--bg2)}
+.datatable thead th{position:sticky;top:0;background:var(--panel)}
+
+/* changelog */
+.log-entry{display:grid;grid-template-columns:120px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.log-entry ul{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+.log-entry li{margin:3px 0}
+.ver{font-family:var(--mono);font-weight:700;color:var(--gold2)}
+
+/* modal + toast */
+.modal-bg{position:fixed;inset:0;background:rgba(5,8,12,.62);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(3px)}
+.modal-bg.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:12px;max-width:440px;width:100%;box-shadow:var(--shadow);padding:20px;max-height:90vh;overflow:auto}
+.modal h2{margin-bottom:8px}
+.modal p{color:var(--muted);margin:6px 0 14px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+#toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--gold);padding:9px 14px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;font-weight:600;animation:tin .2s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){.panel{flex-basis:340px}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr}
+  .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .themes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nav button span{display:none}
+  .nav button{padding:8px 10px}
+  #v-map.on{flex-direction:column}
+  .panel{flex:0 0 auto;height:46%;border-left:0;border-top:1px solid var(--line);transition:height .22s ease}
+  .panel.collapsed{height:44px}
+  .panel.collapsed .pbody{display:none}
+  .mobile-panel-toggle{display:grid;place-items:center;width:44px;flex:0 0 auto;background:var(--bg2);border:0;border-left:1px solid var(--line);color:var(--muted)}
+  .mobile-panel-toggle svg{width:16px;height:16px;transition:transform .2s}
+  .panel.collapsed .mobile-panel-toggle svg{transform:rotate(180deg)}
+  .modebar{top:auto;bottom:52px;max-width:calc(100% - 24px)}
+  .log-entry{grid-template-columns:1fr;gap:4px}
+}
+@media (max-width:560px){
+  .topbar{padding:0 10px;gap:8px;height:54px}
+  .brand-sub{display:none}
+  .brand-name{font-size:13px}
+  .g2,.g3{grid-template-columns:1fr}
+  .page{padding:16px 12px 32px}
+  h1{font-size:22px}
+  .statgrid{grid-template-columns:repeat(3,1fr)}
+  .enh button{width:34px;height:32px}
+  .hud .chip.hide-sm{display:none}
+  .mlbl.poi{font-size:10px}
+  .mlbl.lm{font-size:8.5px}
+}
+@media (max-width:440px){.brand-txt{display:none}.nav{margin-left:auto}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="brand" data-go="home" aria-label="Home">
+      <svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true">
+        <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--gold2)"/><stop offset="1" stop-color="var(--gold)"/></linearGradient></defs>
+        <path d="M17 1 L32 6 V18 C32 27 25 33 17 37 C9 33 2 27 2 18 V6 Z" fill="var(--panel2)" stroke="url(#cg)" stroke-width="1.6"/>
+        <circle cx="17" cy="18" r="8.5" fill="none" stroke="url(#cg)" stroke-width="1.2" opacity=".7"/>
+        <path d="M17 7.5 L19.2 16 L17 18 L14.8 16 Z" fill="url(#cg)"/>
+        <path d="M17 28.5 L14.8 20 L17 18 L19.2 20 Z" fill="var(--arc)"/>
+        <path d="M6.5 18 L15 15.8 L17 18 L15 20.2 Z M27.5 18 L19 20.2 L17 18 L19 15.8 Z" fill="url(#cg)" opacity=".55"/>
+      </svg>
+      <span class="brand-txt"><span class="brand-name">Fortnite Dynamic Map</span><span class="brand-sub">Chapter 7 · Season 4 · Override</span></span>
+    </button>
+    <nav class="nav" aria-label="Primary">
+      <button data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></button>
+      <button data-go="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span>Map</span></button>
+      <button data-go="routes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Routes</span></button>
+      <button data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></button>
+      <button data-go="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12l4 4v12H4z"/><path d="M8 11h8M8 15h8M8 7h5"/></svg><span>Log</span></button>
+    </nav>
+  </header>
+
+  <main id="views">
+    <section class="view" id="v-home"></section>
+
+    <section class="view" id="v-map">
+      <div class="map-wrap" id="mapwrap">
+        <svg id="map" xmlns="http://www.w3.org/2000/svg" data-z="0" aria-label="Interactive island map"></svg>
+        <div class="map-loading" id="maploading">Charting the island…</div>
+        <div class="enh" id="enh"></div>
+        <div class="modebar" id="modebar"><span class="dotp"></span><span id="modetxt"></span><button class="btn sm" id="modecancel">Done</button></div>
+        <div class="hud" id="hud"></div>
+        <div class="zoomctl enh" style="left:auto;top:auto;right:12px;bottom:12px">
+          <div class="enh-grp">
+            <button id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <aside class="panel" id="panel">
+        <div class="ptabs" id="ptabs" role="tablist"></div>
+        <div class="pbody" id="pbody"></div>
+      </aside>
+    </section>
+
+    <section class="view" id="v-routes"></section>
+    <section class="view" id="v-settings"></section>
+    <section class="view" id="v-log"></section>
+  </main>
+</div>
+<div class="modal-bg" id="modal"><div class="modal" id="modalbox" role="dialog" aria-modal="true"></div></div>
+<div id="toasts"></div>
+<script>
+'use strict';
+/* =====================================================================
+   Fortnite Dynamic Map — single-file app, vanilla JS, no dependencies.
+   Coordinates: world units 0..1000 on both axes (x east, y south).
+   ===================================================================== */
+const APP_VERSION = '1.0.0';
+const LS = 'fdm.v1.';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(LS + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch (e) { toast('Storage is full or blocked — change not saved'); } },
+  del(k) { try { localStorage.removeItem(LS + k); } catch (e) {} }
+};
+
+/* ---------------- utils ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const uid = () => Math.random().toString(36).slice(2, 9);
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const fmtS = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m ? `${m}:${String(s % 60).padStart(2, '0')}` : `${s}s`; };
+const fmt1 = n => (Math.round(n * 10) / 10).toFixed(1);
+const MPU = () => S.mapSize / 1000; // metres per unit
+const fmtM = u => { const m = u * MPU(); return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m'; };
+const gridRef = (x, y) => 'ABCDEFGHIJ'[clamp(Math.floor(x / 100), 0, 9)] + (clamp(Math.floor(y / 100), 0, 9) + 1);
+
+/* ---------------- icons ---------------- */
+const IC = {
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  drop: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+  oracle: '<circle cx="12" cy="12" r="9"/><path d="M12 12l6-4"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  route: '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  heat: '<path d="M12 3c2 4 6 5.5 6 10a6 6 0 0 1-12 0c0-2.5 1.5-4 3-5 0 2 1 3 2 3 0-3-1-5 1-8z"/>',
+  chest: '<rect x="3" y="9" width="18" height="11" rx="1.5"/><path d="M3 9a9 4 0 0 1 18 0"/><path d="M10 13h4v3h-4z"/>',
+  grid: '<path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  label: '<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  focus: '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><circle cx="12" cy="12" r="3"/>',
+  ruler: '<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/>',
+  zone: '<circle cx="12" cy="12" r="9" stroke-dasharray="3 2.5"/><circle cx="12" cy="12" r="2.5"/>',
+  fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  full: '<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>',
+  bus: '<rect x="4" y="4" width="16" height="13" rx="2"/><path d="M4 11h16M8 21v-4M16 21v-4"/>',
+  up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
+  wand: '<path d="M4 20L16 8"/><path d="M15 3v3M18 6h3M19.5 3.5l-2 2M12 5h2M19 10v2"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/>',
+  play: '<path d="M7 4l13 8-13 8z"/>', stop: '<rect x="6" y="6" width="12" height="12" rx="1"/>',
+  dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  move: '<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+  crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',
+  key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l9-9M17 5l2 2M15 7l2 2"/>',
+  sound: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6"/>',
+  map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  dl: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', ul: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+};
+const ico = (n, sw = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
+
+/* =====================================================================
+   DATA — Chapter 7 Season 4 "Override" + Fortnitemares 2026
+   Chest/ammo/vending/reboot counts: Fortnite Wiki figures where published.
+   ppg (avg players landing per game), empty (% games nobody lands), air
+   (median seconds off bus): Elite Esports landing data, C7S4.
+   Positions are APPROXIMATE — use Calibrate mode to correct them.
+   ===================================================================== */
+const NODE_DEFS = [
+  // ---- Named locations
+  { id: 'wonkee', name: 'Wonkeeland', type: 'poi', x: 765, y: 205, biome: 'candy', chests: 34, ammo: 31, vend: 3, reboot: 1, ppg: 4.10, empty: 12, air: 33.9, note: 'Relocated to the north-east this chapter. Fortnitemares revamp turned its water toxic green.' },
+  { id: 'freaky', name: 'Freaky Fields', type: 'poi', x: 470, y: 170, biome: 'farm', chests: 22, est: true, ammo: 30, vend: 2, reboot: 1, ppg: 3.72, empty: 11, air: 27.8, note: 'Fortnitemares replacement for Latte Landing — shops and houses removed, leaving an exposed Halloween farm. Contest stats inherited from Latte Landing.' },
+  { id: 'lifty', name: 'Lifty Lodge', type: 'poi', x: 225, y: 225, biome: 'alpine', chests: 60, ammo: 40, vend: 6, reboot: 2, ppg: 5.26, empty: 4, air: 34.6, note: 'Six vending machines — the most on the island — and two Reboot Vans. Carries the Fortnitemares orange/purple filter.' },
+  { id: 'golden', name: 'Golden Grove', type: 'poi', x: 640, y: 335, biome: 'grove', chests: 51, ammo: 38, vend: 3, reboot: 1, ppg: 5.38, empty: 4, air: 34.6, note: 'Second-hottest drop on the island. The hidden chest under the big tree was removed in v41.10.' },
+  { id: 'nightmare', name: 'Nightmare Neighborhood', type: 'poi', x: 365, y: 360, biome: 'suburb', chests: 60, est: true, ammo: 40, vend: 3, reboot: 2, ppg: 5.54, empty: 5, air: 22.7, boss: { name: 'Freddy Krueger', drop: "Freddy's Nightmare (teleport-to-target melee)" }, note: 'A Nightmare on Elm Street suburb built over The Battlewoods (81 chests pre-update). Krueger is mobile and can teleport into melee range. Contest stats inherited from The Battlewoods — hottest drop on the map.' },
+  { id: 'chopped', name: 'Chopped Shop', type: 'poi', x: 215, y: 435, biome: 'urban', chests: 18, est: true, ammo: 22, vend: 2, reboot: 1, ppg: 2.93, empty: 16, air: 35.3, note: 'Garage with a small racetrack beside it — reliable vehicle spawn.' },
+  { id: 'reign', name: "Reality's Reign", type: 'poi', x: 470, y: 470, biome: 'tech', chests: 40, est: true, ammo: 30, vend: 2, reboot: 1, ppg: 2.47, empty: 26, air: 21.1, boss: { name: 'Hush', drop: 'Mythic Assault Rifle' }, note: 'Central fortress of pipes and machinery built over former Zero Point ground. Shortest median air time on the island. 77 cheat-code panel spawn spots, concentrated on the main building.' },
+  { id: 'heatwave', name: 'Heatwave Harbor', type: 'poi', x: 115, y: 575, biome: 'harbor', chests: 37, ammo: 36, vend: 3, reboot: 1, ppg: 3.55, empty: 12, air: 32.1, note: 'High-rises linked by a jump pad. 76 cheat-code panel spawn spots. Pac-Man ghost island just offshore.' },
+  { id: 'greenhill', name: 'Green Hill Zone', type: 'poi', x: 255, y: 645, biome: 'greenhill', chests: 35, est: true, ammo: 30, vend: 2, reboot: 1, ppg: 3.88, empty: 9, air: 26.0, boss: { name: 'Dr. Eggman', drop: 'Mythic 8-Bit Shotgun' }, note: 'Sonic collab POI replacing Calamari Canyon — boost pads, collectible rings and a runnable vertical loop. ~60 cheat-code panel spawns.' },
+  { id: 'stone', name: 'Stone Sanctum', type: 'poi', x: 420, y: 705, biome: 'temple', chests: 28, est: true, ammo: 20, vend: 1, reboot: 1, ppg: 1.98, empty: 38, air: 21.6, vault: 'Temple Vault — shoot the blue-particle chalices to drop Temple Vault Keys, place two at the central fountain: 3 Mythic chests + Slurp Barrels.', note: 'Weathered temple complex replacing Sinister Strip. Tight corridors, treasure chests behind secret walls and a maze behind the main structure. Low contest for its loot.' },
+  { id: 'shaken', name: 'Shaken Sanctuary', type: 'poi', x: 650, y: 620, biome: 'tropical', chests: 53, ammo: 30, vend: 3, reboot: 1, ppg: 4.67, empty: 6, air: 27.2, vault: 'Epic vault (reported Season 3 — verify in-game).', note: 'Tropical rebuild of New Sanctuary, south-east of centre. Balanced loot, sprite spawns and central rotations.' },
+  { id: 'cluster', name: 'Cluster Coast', type: 'poi', x: 835, y: 715, biome: 'coastal', chests: 27, ammo: 35, vend: 3, reboot: 1, ppg: 3.93, empty: 10, air: 41.3, note: 'South-east coast. The five-storey building is the cheat-code hotspot (57 panel spawns).' },
+  { id: 'sunken', name: 'Sunken Shores', type: 'poi', x: 530, y: 860, biome: 'beach', chests: 36, ammo: 21, vend: 3, reboot: 1, ppg: 3.05, empty: 15, air: 30.6, note: 'Southernmost POI. Tetris blocks have fallen across the roads and damaged structures. Good beginner drop.' },
+  // ---- Landmarks
+  { id: 'fazbear', name: "Freddy Fazbear's Pizzeria", type: 'lm', x: 715, y: 455, biome: 'urban', chests: 10, est: true, ppg: 2.92, empty: 15, air: 26.1, boss: { name: 'FNAF Animatronics', drop: 'Possess the animatronic (Freddy, Bonnie, Chica)' }, note: 'Five Nights at Freddy\'s building at the former Arcade landmark.' },
+  { id: 'geno', name: "Geno's Machine", type: 'lm', x: 525, y: 535, biome: 'tech', chests: 6, est: true, ppg: 1.99, empty: 34, air: 21.4, note: 'Island centre (former Zero Point). Cheat-code panels only spawn north of here.' },
+  { id: 'pixel', name: 'Pixel Polys', type: 'lm', x: 585, y: 420, biome: 'urban', chests: 8, est: true, ppg: 1.97, empty: 34, air: 22.8 },
+  { id: 'barncade', name: 'Barncade', type: 'lm', x: 330, y: 525, biome: 'farm', chests: 8, est: true, ppg: 2.20, empty: 21, air: 26.7 },
+  { id: 'maze', name: 'Mega Maze', type: 'lm', x: 300, y: 785, biome: 'hedge', chests: 8, est: true, ppg: 1.39, empty: 44, air: 28.7, note: 'Layout reshuffles every match — routes may be blocked.' },
+  { id: 'quack', name: 'The Quackaway', type: 'lm', x: 880, y: 525, biome: 'coastal', chests: 8, est: true, ppg: 2.71, empty: 18, air: 43.3 },
+  { id: 'stumpy', name: "Ol' Stumpy", type: 'lm', x: 150, y: 335, biome: 'forest', chests: 6, est: true, ppg: 2.32, empty: 20, air: 27.2 },
+  { id: 'wettest', name: 'Wettest-Bones Research Facility', type: 'lm', x: 845, y: 335, biome: 'tech', chests: 8, est: true, ppg: 2.30, empty: 21, air: 33.0 },
+  { id: 'dine', name: "Dine 'n Docks", type: 'lm', x: 700, y: 840, biome: 'coastal', chests: 7, est: true, ppg: 2.20, empty: 24, air: 37.1 },
+  { id: 'artsy', name: 'Artsy RVs', type: 'lm', x: 335, y: 880, biome: 'beach', chests: 6, est: true, ppg: 1.61, empty: 29, air: 39.5 },
+  { id: 'sleazy', name: 'The Sleazy Snooze', type: 'lm', x: 585, y: 250, biome: 'urban', chests: 6, est: true, ppg: 1.19, empty: 44, air: 35.5 },
+  { id: 'birders', name: "Birder's Beach", type: 'lm', x: 100, y: 420, biome: 'beach', chests: 4, est: true, ppg: 0.63, empty: 65, air: 54.8 },
+  { id: 'crashout', name: 'Crashout Estates', type: 'lm', x: 175, y: 775, biome: 'suburb', chests: 6, est: true, ppg: 0.50, empty: 69, air: 45.0 },
+  { id: 'stack', name: "Stack o' Stones", type: 'lm', x: 360, y: 175, biome: 'temple', chests: 3, est: true, ppg: 0.41, empty: 74, air: 30.0 },
+  { id: 'carwashE', name: 'Carwash (East)', type: 'lm', x: 770, y: 565, biome: 'urban', chests: 4, est: true, ppg: 2.56, empty: 18, air: 27.9 },
+  { id: 'carwashW', name: 'Carwash (West)', type: 'lm', x: 185, y: 510, biome: 'urban', chests: 4, est: true, ppg: 0.99, empty: 44, air: 41.1 },
+  // ---- Islands
+  { id: 'pacman', name: 'Pac-Man Island', type: 'isle', x: 42, y: 690, biome: 'beach', chests: 4, est: true, ppg: 1.31, empty: 37, air: 30.8, note: 'Playable Pac-Man arcade machine.' },
+  { id: 'blinky', name: 'Blinky Island', type: 'isle', x: 505, y: 48, biome: 'beach', chests: 4, est: true, ppg: 2.22, empty: 26, air: 40.0 },
+  { id: 'pinky', name: 'Pinky Island', type: 'isle', x: 955, y: 245, biome: 'beach', chests: 3, est: true, ppg: 0.55, empty: 68, air: 34.5 },
+  // ---- Override consoles (cheat-code)
+  { id: 'oc-e', name: 'Override Console (E)', type: 'console', x: 805, y: 450, chests: 2, est: true, ppg: 3.03, empty: 16, air: 25.6 },
+  { id: 'oc-n', name: 'Override Console (N)', type: 'console', x: 455, y: 275, chests: 2, est: true, ppg: 1.70, empty: 32, air: 27.8 },
+  { id: 'oc-c', name: 'Override Console (C)', type: 'console', x: 560, y: 480, chests: 2, est: true, ppg: 1.37, empty: 44, air: 22.2 },
+  { id: 'oc-nw', name: 'Override Console (NW)', type: 'console', x: 290, y: 260, chests: 2, est: true, ppg: 1.34, empty: 37, air: 32.5 },
+  { id: 'oc-se', name: 'Override Console (SE)', type: 'console', x: 735, y: 730, chests: 2, est: true, ppg: 1.34, empty: 40, air: 33.1 },
+  { id: 'oc-w', name: 'Override Console (W)', type: 'console', x: 165, y: 665, chests: 2, est: true, ppg: 1.32, empty: 39, air: 32.5 },
+  { id: 'oc-s', name: 'Override Console (S)', type: 'console', x: 470, y: 800, chests: 2, est: true, ppg: 0.18, empty: 84, air: 33.6 },
+];
+const TYPE_LABEL = { poi: 'Named Location', lm: 'Landmark', isle: 'Island', console: 'Override Console' };
+const BIOME = {
+  candy: [168, 112, 160], farm: [168, 140, 72], alpine: [70, 104, 80], grove: [172, 152, 64], suburb: [104, 118, 70],
+  urban: [130, 134, 132], tech: [88, 100, 120], harbor: [118, 128, 130], greenhill: [84, 162, 70], temple: [160, 146, 112],
+  tropical: [58, 148, 92], coastal: [140, 152, 112], beach: [214, 196, 140], forest: [58, 100, 56], hedge: [70, 122, 62]
+};
+const PIN_TYPES = {
+  chest: { label: 'Chest', color: '#f1c84b' }, npc: { label: 'NPC / AI', color: '#ff7a6b' },
+  mobility: { label: 'Mobility', color: '#5fd6e6' }, weapon: { label: 'Weapon', color: '#b48cff' }, note: { label: 'Note', color: '#e8e8e8' }
+};
+const LAYER_DEFS = [
+  ['poi', 'Named locations', 'Major POIs', '#d3ad58'],
+  ['lm', 'Landmarks', 'Minor points of interest', '#e9eef4'],
+  ['isle', 'Islands', 'Off-shore islands', '#53b8c6'],
+  ['boss', 'AI · Bosses', 'Boss spawns & mythic drops', '#e5655b'],
+  ['npc', 'AI · NPC pins', 'Characters you have tagged', '#ff7a6b'],
+  ['chest', 'Chests', 'Chest count per location', '#f1c84b'],
+  ['vault', 'Vaults', 'Vaults & mythic chest sites', '#f1d68e'],
+  ['console', 'Override consoles', 'Cheat-code panels', '#b48cff'],
+  ['service', 'Reboot & vending', 'Reboot Vans / vending machines', '#5cc48b'],
+  ['roads', 'Roads', 'Main road network', '#d8cfb5'],
+  ['pins', 'Custom pins', 'Your chests, mobility & notes', '#5fd6e6'],
+];
+const DEF_LAYERS = { poi: true, lm: true, isle: true, boss: true, npc: true, chest: false, vault: true, console: false, service: false, roads: true, pins: true };
+const DEF_ENH = { heat: false, loot: false, grid: true, labels: true, nitemare: false, focus: false };
+const DEF_SETTINGS = {
+  theme: 'boardroom', mapSize: 2400, busSpeed: 30, baseDescent: 19, glideSpeed: 21, maxReach: 1050,
+  footSpeed: 6, vehSpeed: 22, secPerChest: 6, dwellPOI: 45, dwellLM: 20, bossTime: 25, budget: 300,
+  sound: true, haptics: true, markerScale: 1, bgOpacity: 0.85
+};
+const CHANGELOG = [
+  { v: '1.0.0', d: '25 Oct 2026', items: [
+    'Initial release: interactive Chapter 7 Season 4 “Override” island with Fortnitemares 2026 changes (Nightmare Neighborhood, Freaky Fields, Freddy Fazbear\'s Pizzeria).',
+    'Procedural terrain renderer (biome-blended, cached) with pan, wheel/pinch zoom and counter-scaled markers.',
+    '11 toggleable layers: named locations, landmarks, islands, AI bosses, NPC pins, chests, vaults, override consoles, reboot/vending, roads, custom pins.',
+    'Enhancement rail: contest heatmap, loot glow, grid, labels, Nitemare filter, route focus, ruler, zone planner, fit, fullscreen.',
+    'Drop Calculator: bus-path physics, optimal jump point, jump window, live countdown with audio/haptic cues, best drops for the current bus.',
+    'Oracle route AI: orienteering solver (randomised cheapest-insertion + 2-opt + swap search) under a time budget with loot / mythic / safety weighting and zone-end constraint.',
+    'Route Builder with snap-to-location, reorder, 2-opt optimiser and 6 persistent save slots with share codes.',
+    'Calibrate mode + custom map image import so positions can be matched exactly to the official map.',
+    'Four themes, settings & physics tuning, inline data editor, full export/import.'
+  ] }
+];
+
+/* ---------------- state ---------------- */
+let S = Object.assign({}, DEF_SETTINGS, store.get('settings', {}));
+let LAYERS = Object.assign({}, DEF_LAYERS, store.get('layers', {}));
+let ENH = Object.assign({}, DEF_ENH, store.get('enh', {}));
+let NODES = [];
+let PINS = store.get('pins', []);
+let SLOTS = (() => { const s = store.get('slots', null); return Array.isArray(s) && s.length === 6 ? s : [null, null, null, null, null, null]; })();
+let BUS = store.get('bus', null);
+let ZONE = store.get('zone', null);
+let ROUTE = store.get('route', []);
+let DROP = store.get('drop', null);
+let ORACLE_RES = null;
+let selected = null;
+let mode = 'select';
+let pinType = 'chest';
+let ruler = null;
+let curPane = store.get('pane', 'layers');
+let curView = 'home';
+const byId = id => NODES.find(n => n.id === id);
+
+function buildNodes() {
+  const ov = store.get('nodeOv', {});
+  NODES = NODE_DEFS.map(d => Object.assign({}, d, ov[d.id] || {}));
+}
+function saveNodeOv(id, patch) { const ov = store.get('nodeOv', {}); ov[id] = Object.assign(ov[id] || {}, patch); store.set('nodeOv', ov); }
+const saveSettings = () => store.set('settings', S);
+
+/* ---------------- toast / modal ---------------- */
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; $('#toasts').appendChild(t); setTimeout(() => t.remove(), 2600); }
+function modal(html, onMount) {
+  const bg = $('#modal'), box = $('#modalbox'); box.innerHTML = html; bg.classList.add('on');
+  const close = () => { bg.classList.remove('on'); box.innerHTML = ''; };
+  bg.onclick = e => { if (e.target === bg) close(); };
+  if (onMount) onMount(box, close);
+  const f = box.querySelector('input,select,button.pri'); if (f) setTimeout(() => f.focus(), 30);
+  return close;
+}
+function ask(title, text, okLabel = 'Confirm', danger = false) {
+  return new Promise(res => {
+    modal(`<h2>${esc(title)}</h2><p>${esc(text)}</p><div class="acts"><button class="btn ghost" data-a="no">Cancel</button><button class="btn ${danger ? 'danger' : 'pri'}" data-a="yes">${esc(okLabel)}</button></div>`, (box, close) => {
+      box.querySelector('[data-a=no]').onclick = () => { close(); res(false); };
+      box.querySelector('[data-a=yes]').onclick = () => { close(); res(true); };
+    });
+  });
+}
+function promptText(title, label, value = '') {
+  return new Promise(res => {
+    modal(`<h2>${esc(title)}</h2><div class="field" style="margin-top:12px"><label>${esc(label)}</label><input class="inp" id="mp-in" value="${esc(value)}" maxlength="60"></div><div class="acts"><button class="btn ghost" data-a="no">Cancel</button><button class="btn pri" data-a="yes">Save</button></div>`, (box, close) => {
+      const inp = box.querySelector('#mp-in');
+      const ok = () => { const v = inp.value.trim(); close(); res(v || null); };
+      box.querySelector('[data-a=no]').onclick = () => { close(); res(null); };
+      box.querySelector('[data-a=yes]').onclick = ok;
+      inp.onkeydown = e => { if (e.key === 'Enter') ok(); };
+    });
+  });
+}
+
+/* =====================================================================
+   NOISE + ISLAND GEOMETRY
+   ===================================================================== */
+const PERM = (() => { const r = mulberry32(7331), p = new Uint8Array(512), a = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } for (let i = 0; i < 512; i++) p[i] = a[i & 255]; return p; })();
+function vnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const h = (i, j) => PERM[(PERM[(i & 255)] + (j & 255)) & 511] / 255;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y, o = 4) { let s = 0, a = .5, f = 1; for (let i = 0; i < o; i++) { s += a * vnoise(x * f, y * f); f *= 2.03; a *= .5; } return s; }
+const coastR = t => 408 + 22 * Math.sin(3 * t + 1.3) + 15 * Math.sin(5 * t + .4) + 8 * Math.sin(8 * t + 2.2) + 5 * Math.sin(13 * t + .9);
+function landAt(x, y) {
+  const dx = x - 500, dy = y - 500, d = Math.hypot(dx, dy), t = Math.atan2(dy, dx);
+  let m = coastR(t) + (fbm(x * .018, y * .018, 3) - .5) * 40 - d;
+  for (const n of NODES) if (n.type === 'isle') m = Math.max(m, 22 + (vnoise(x * .08, y * .08) - .5) * 10 - Math.hypot(x - n.x, y - n.y));
+  return m;
+}
+
+/* =====================================================================
+   MAP ENGINE
+   ===================================================================== */
+const svg = $('#map');
+let world, G = {};
+let view = { k: 1, tx: 0, ty: 0 }, fitK = 1;
+let scaleEls = [];
+let terrainURL = null;
+
+function initSVG() {
+  svg.innerHTML = '';
+  const defs = el('defs', null, svg);
+  defs.innerHTML = `
+    <radialGradient id="heatG"><stop offset="0" stop-color="#ff3b2f" stop-opacity=".75"/><stop offset=".45" stop-color="#ff8a2a" stop-opacity=".4"/><stop offset="1" stop-color="#ffd23f" stop-opacity="0"/></radialGradient>
+    <radialGradient id="lootG"><stop offset="0" stop-color="#ffe9a3" stop-opacity=".85"/><stop offset=".5" stop-color="#f1c84b" stop-opacity=".35"/><stop offset="1" stop-color="#f1c84b" stop-opacity="0"/></radialGradient>
+    <radialGradient id="nmG" cx="50%" cy="50%" r="70%"><stop offset=".35" stop-color="#2a0b3d" stop-opacity="0"/><stop offset="1" stop-color="#1a0626" stop-opacity=".75"/></radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f1d68e"/></marker>
+    <marker id="arrowB" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9fe3ff"/></marker>`;
+  world = el('g', { id: 'world' }, svg);
+  ['bg', 'terrain', 'roads', 'grid', 'heat', 'loot', 'zone', 'bus', 'route', 'oracle', 'markers', 'labels', 'pins', 'ruler', 'fx'].forEach(k => G[k] = el('g', { id: 'l-' + k }, world));
+  G.terrainImg = el('image', { id: 'terrain', x: 0, y: 0, width: 1000, height: 1000, preserveAspectRatio: 'none' }, G.terrain);
+  el('rect', { id: 'nm-overlay', x: -500, y: -500, width: 2000, height: 2000, fill: 'url(#nmG)' }, G.terrain);
+  G.bgImg = el('image', { x: 0, y: 0, width: 1000, height: 1000, preserveAspectRatio: 'none', style: 'display:none' }, G.bg);
+  G.gridLbl = el('g', null, svg); // screen-space grid labels
+}
+
+/* -- terrain raster: generated once, served as blob URL -- */
+function genTerrain() {
+  return new Promise(resolve => {
+    const R = 1100, c = document.createElement('canvas'); c.width = c.height = R;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(R, R), d = img.data;
+    const sites = NODES.filter(n => n.biome && n.type !== 'console').map(n => ({ x: n.x, y: n.y, w: n.type === 'poi' ? 1 : .62, c: BIOME[n.biome] }));
+    const grass = [98, 140, 74];
+    const sc = 1000 / R;
+    for (let py = 0; py < R; py++) {
+      const y = py * sc;
+      for (let px = 0; px < R; px++) {
+        const x = px * sc, i = (py * R + px) * 4;
+        const m = landAt(x, y);
+        let r, g, b;
+        if (m < 0) {
+          const s = clamp(-m / 55, 0, 1), rip = vnoise(x * .06, y * .06) * .08;
+          r = 52 + (20 - 52) * s; g = 134 + (56 - 134) * s; b = 170 + (92 - 170) * s;
+          r *= 1 + rip; g *= 1 + rip; b *= 1 + rip;
+          if (m > -3.2) { const f = 1 - (-m / 3.2); r += (235 - r) * f * .7; g += (245 - g) * f * .7; b += (250 - b) * f * .7; }
+        } else {
+          const jit = (fbm(x * .03, y * .03, 2) - .5) * 70;
+          let best = 1e9, bc = grass;
+          for (const s of sites) { const dd = Math.hypot(x - s.x, y - s.y) / s.w + jit; if (dd < best) { best = dd; bc = s.c; } }
+          const t = clamp((best - 55) / 85, 0, 1);
+          r = bc[0] + (grass[0] - bc[0]) * t; g = bc[1] + (grass[1] - bc[1]) * t; b = bc[2] + (grass[2] - bc[2]) * t;
+          const e = fbm(x * .011, y * .011, 4), e2 = fbm((x + 2) * .011, (y + 2) * .011, 4);
+          const shade = clamp(1 + (e - e2) * 9 + (e - .5) * .35, .62, 1.3);
+          r *= shade; g *= shade; b *= shade;
+          const grain = (vnoise(x * .45, y * .45) - .5) * 14; r += grain; g += grain; b += grain;
+          if (m < 9) { const f = 1 - m / 9; r += (222 - r) * f; g += (204 - g) * f; b += (150 - b) * f; }
+        }
+        d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    c.toBlob(bl => { if (terrainURL) URL.revokeObjectURL(terrainURL); terrainURL = URL.createObjectURL(bl); resolve(terrainURL); }, 'image/jpeg', .9);
+  });
+}
+async function renderTerrain(force) {
+  if (terrainURL && !force) { G.terrainImg.setAttribute('href', terrainURL); $('#maploading').classList.add('gone'); return; }
+  $('#maploading').classList.remove('gone');
+  await new Promise(r => setTimeout(r, 30));
+  const url = await genTerrain();
+  G.terrainImg.setAttribute('href', url);
+  $('#maploading').classList.add('gone');
+}
+
+/* -- roads: MST over land nodes + a few loops -- */
+function renderRoads() {
+  G.roads.innerHTML = '';
+  if (!LAYERS.roads) return;
+  const pts = NODES.filter(n => n.type === 'poi' || (n.type === 'lm' && n.ppg > 1));
+  const inT = new Set([0]), edges = [];
+  while (inT.size < pts.length) {
+    let best = null;
+    for (const i of inT) for (let j = 0; j < pts.length; j++) if (!inT.has(j)) { const dd = dist(pts[i], pts[j]); if (!best || dd < best[2]) best = [i, j, dd]; }
+    inT.add(best[1]); edges.push(best);
+  }
+  // add short extra links for loops
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+    const dd = dist(pts[i], pts[j]);
+    if (dd < 175 && !edges.some(e => (e[0] === i && e[1] === j) || (e[0] === j && e[1] === i)) && pts[i].type === 'poi' && pts[j].type === 'poi') edges.push([i, j, dd]);
+  }
+  const rnd = mulberry32(42);
+  let dpath = '';
+  for (const [i, j] of edges) {
+    const a = pts[i], b = pts[j], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, L = dist(a, b);
+    const off = (rnd() - .5) * L * .35, nx = -(b.y - a.y) / L, ny = (b.x - a.x) / L;
+    dpath += `M${a.x} ${a.y}Q${mx + nx * off} ${my + ny * off} ${b.x} ${b.y}`;
+  }
+  el('path', { d: dpath, fill: 'none', stroke: 'rgba(40,34,24,.45)', 'stroke-width': 5, 'stroke-linecap': 'round' }, G.roads);
+  el('path', { d: dpath, fill: 'none', stroke: '#e4d9b8', 'stroke-width': 2.6, 'stroke-linecap': 'round', opacity: .8 }, G.roads);
+}
+
+function renderGrid() {
+  G.grid.innerHTML = ''; G.gridLbl.innerHTML = '';
+  if (!ENH.grid) return;
+  let d = '';
+  for (let i = 0; i <= 10; i++) { d += `M${i * 100} 0V1000M0 ${i * 100}H1000`; }
+  el('path', { d, stroke: 'rgba(255,255,255,.22)', 'stroke-width': 1, fill: 'none', 'vector-effect': 'non-scaling-stroke' }, G.grid);
+  updateGridLabels();
+}
+function updateGridLabels() {
+  if (!ENH.grid) return;
+  G.gridLbl.innerHTML = '';
+  const W = svg.clientWidth, H = svg.clientHeight;
+  for (let i = 0; i < 10; i++) {
+    const sx = view.tx + (i * 100 + 50) * view.k, sy = view.ty + (i * 100 + 50) * view.k;
+    if (sx > 50 && sx < W - 8) { const t = el('text', { x: sx, y: Math.max(14, view.ty + 14), class: 'mlbl sm', 'text-anchor': 'middle' }, G.gridLbl); t.textContent = 'ABCDEFGHIJ'[i]; }
+    if (sy > 14 && sy < H - 40) { const t = el('text', { x: Math.max(8, view.tx + 8), y: sy + 3, class: 'mlbl sm' }, G.gridLbl); t.textContent = i + 1; }
+  }
+}
+
+function renderHeat() {
+  G.heat.innerHTML = '';
+  if (!ENH.heat) return;
+  for (const n of NODES) { if (!n.ppg) continue; el('circle', { cx: n.x, cy: n.y, r: 30 + n.ppg * 16, fill: 'url(#heatG)', opacity: clamp(n.ppg / 5.5, .15, 1) }, G.heat); }
+}
+function renderLoot() {
+  G.loot.innerHTML = '';
+  if (!ENH.loot) return;
+  for (const n of NODES) { if (!n.chests || n.type === 'console') continue; el('circle', { cx: n.x, cy: n.y, r: 14 + Math.sqrt(n.chests) * 9, fill: 'url(#lootG)' }, G.loot); }
+}
+
+/* -- markers -- */
+function markerVisible(n) { return !!LAYERS[n.type]; }
+function addScaled(g, x, y, mul = 1) { scaleEls.push({ g, x, y, mul }); }
+function renderMarkers() {
+  G.markers.innerHTML = ''; G.labels.innerHTML = '';
+  scaleEls = scaleEls.filter(s => !G.markers.contains(s.g) && !G.labels.contains(s.g) && s.g.isConnected);
+  const routeIds = new Set([...(ROUTE || []).map(w => w.id), ...((ORACLE_RES && ORACLE_RES.order) || [])].filter(Boolean));
+  const order = ['console', 'isle', 'lm', 'poi'];
+  for (const t of order) for (const n of NODES.filter(n => n.type === t)) {
+    const show = markerVisible(n);
+    const bossOnly = !show && n.boss && LAYERS.boss;
+    const vaultOnly = !show && n.vault && LAYERS.vault;
+    const chestOnly = !show && LAYERS.chest && n.type !== 'console';
+    if (!show && !bossOnly && !vaultOnly && !chestOnly) continue;
+    const g = el('g', { class: 'mk' + (routeIds.has(n.id) ? ' inroute' : ''), 'data-id': n.id }, G.markers);
+    el('circle', { class: 'hit', r: 16 }, g);
+    if (show) {
+      if (t === 'poi') {
+        el('path', { d: 'M0 -9L9 0L0 9L-9 0Z', fill: '#141c26', stroke: '#f1d68e', 'stroke-width': 2 }, g);
+        el('path', { d: 'M0 -4L4 0L0 4L-4 0Z', fill: '#d3ad58' }, g);
+      } else if (t === 'lm') {
+        el('circle', { r: 5, fill: '#141c26', stroke: '#e9eef4', 'stroke-width': 1.8 }, g);
+      } else if (t === 'isle') {
+        el('circle', { r: 5.5, fill: '#0e2b3a', stroke: '#53d0e0', 'stroke-width': 2 }, g);
+      } else if (t === 'console') {
+        el('path', { d: 'M0 -7L6 -3.5V3.5L0 7L-6 3.5V-3.5Z', fill: '#2a1d4a', stroke: '#c9a8ff', 'stroke-width': 1.8 }, g);
+        el('circle', { r: 1.8, fill: '#c9a8ff' }, g);
+      }
+    }
+    if (n.boss && LAYERS.boss) {
+      const b = el('g', { transform: show ? 'translate(13,-13)' : '' }, g);
+      el('circle', { r: 8.5, fill: '#7a1b17', stroke: '#ff8b80', 'stroke-width': 1.6 }, b);
+      el('path', { d: 'M-5 2.5L-5 -3L-2.5 -0.5L0 -4.5L2.5 -0.5L5 -3L5 2.5Z', fill: '#ffd7d2' }, b);
+      if (show) { const p = el('circle', { r: 9, fill: 'none', stroke: '#ff6b5f', 'stroke-width': 1.5, class: 'pulse' }, b); }
+    }
+    if (n.vault && LAYERS.vault) {
+      const v = el('g', { transform: show ? 'translate(-13,-13)' : '' }, g);
+      el('rect', { x: -7, y: -7, width: 14, height: 14, rx: 3, fill: '#4a3a12', stroke: '#f1d68e', 'stroke-width': 1.6 }, v);
+      el('circle', { cy: -1.2, r: 2.2, fill: '#f1d68e' }, v); el('path', { d: 'M-1.2 0L1.2 0L1.8 4L-1.8 4Z', fill: '#f1d68e' }, v);
+    }
+    if (LAYERS.chest && n.chests && n.type !== 'console') {
+      const c = el('g', { transform: show ? `translate(${t === 'poi' ? 14 : 10},${t === 'poi' ? 11 : 8})` : '' }, g);
+      const label = String(n.chests) + (n.est ? '~' : '');
+      const w = 8 + label.length * 6;
+      el('rect', { x: -w / 2, y: -7.5, width: w, height: 15, rx: 7.5, fill: '#3a2c08', stroke: '#f1c84b', 'stroke-width': 1.3 }, c);
+      const tx = el('text', { y: 3.6, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 800, fill: '#ffe6a6', 'font-family': 'ui-monospace,Menlo,monospace' }, c); tx.textContent = label;
+    }
+    if (LAYERS.service && (n.reboot || n.vend)) {
+      const s = el('g', { transform: `translate(${t === 'poi' ? -15 : -10},${t === 'poi' ? 11 : 8})` }, g);
+      el('rect', { x: -15, y: -7.5, width: 30, height: 15, rx: 4, fill: '#0f2a1d', stroke: '#5cc48b', 'stroke-width': 1.2 }, s);
+      const tx = el('text', { y: 3.5, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 800, fill: '#bff0d4', 'font-family': 'ui-monospace,Menlo,monospace' }, s); tx.textContent = `R${n.reboot || 0}·V${n.vend || 0}`;
+    }
+    if (selected && selected.kind === 'node' && selected.id === n.id) el('circle', { r: 16, class: 'sel-ring' }, g);
+    addScaled(g, n.x, n.y);
+    // label
+    if (ENH.labels && show) {
+      const lg = el('g', { class: 'lblg' + (routeIds.has(n.id) ? ' inroute' : '') + (t === 'poi' ? '' : t === 'lm' || t === 'isle' ? ' zlm' : ' zlm2') }, G.labels);
+      const tx = el('text', { y: (t === 'poi' ? -15 : -10) - ((n.boss && LAYERS.boss) || (n.vault && LAYERS.vault) ? 13 : 0), 'text-anchor': 'middle', class: 'mlbl ' + (t === 'poi' ? 'poi' : 'lm') }, lg);
+      tx.textContent = t === 'console' ? 'Console ' + n.name.match(/\((.*)\)/)[1] : n.name;
+      addScaled(lg, n.x, n.y);
+    }
+  }
+  applyScales();
+}
+
+function renderPins() {
+  G.pins.innerHTML = '';
+  for (const p of PINS) {
+    if (p.type === 'npc' ? !LAYERS.npc : !LAYERS.pins) continue;
+    const c = PIN_TYPES[p.type] || PIN_TYPES.note;
+    const g = el('g', { class: 'mk', 'data-pin': p.id }, G.pins);
+    el('circle', { class: 'hit', r: 13 }, g);
+    el('path', { d: 'M0 0C-5 -6 -7 -9 -7 -12.5A7 7 0 0 1 7 -12.5C7 -9 5 -6 0 0Z', fill: c.color, stroke: '#0b0f14', 'stroke-width': 1.4 }, g);
+    el('circle', { cy: -12.5, r: 2.6, fill: '#0b0f14' }, g);
+    if (selected && selected.kind === 'pin' && selected.id === p.id) el('circle', { cy: -8, r: 14, class: 'sel-ring' }, g);
+    addScaled(g, p.x, p.y);
+    if (ENH.labels && p.label) { const lg = el('g', { class: 'zlm' }, G.pins); const t = el('text', { y: 11, 'text-anchor': 'middle', class: 'mlbl lm' }, lg); t.textContent = p.label; addScaled(lg, p.x, p.y); }
+  }
+  applyScales();
+}
+
+function renderZone() {
+  G.zone.innerHTML = '';
+  if (!ZONE) return;
+  el('path', { d: `M-2000 -2000H3000V3000H-2000Z M${ZONE.x + ZONE.r} ${ZONE.y}A${ZONE.r} ${ZONE.r} 0 1 0 ${ZONE.x - ZONE.r} ${ZONE.y}A${ZONE.r} ${ZONE.r} 0 1 0 ${ZONE.x + ZONE.r} ${ZONE.y}Z`, fill: 'rgba(120,40,200,.28)', 'fill-rule': 'evenodd' }, G.zone);
+  el('circle', { cx: ZONE.x, cy: ZONE.y, r: ZONE.r, fill: 'none', stroke: '#fff', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }, G.zone);
+  el('circle', { cx: ZONE.x, cy: ZONE.y, r: ZONE.r, fill: 'none', stroke: '#b98cff', 'stroke-width': 5, opacity: .35, 'vector-effect': 'non-scaling-stroke' }, G.zone);
+}
+
+function busLine() {
+  if (!BUS) return null;
+  // extend a->b across the whole map square
+  const dx = BUS.b.x - BUS.a.x, dy = BUS.b.y - BUS.a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  const tVals = [];
+  const lo = -60, hi = 1060;
+  if (Math.abs(ux) > 1e-6) { tVals.push((lo - BUS.a.x) / ux, (hi - BUS.a.x) / ux); }
+  if (Math.abs(uy) > 1e-6) { tVals.push((lo - BUS.a.y) / uy, (hi - BUS.a.y) / uy); }
+  const pts = tVals.map(t => ({ t, x: BUS.a.x + ux * t, y: BUS.a.y + uy * t })).filter(p => p.x >= lo - .01 && p.x <= hi + .01 && p.y >= lo - .01 && p.y <= hi + .01).sort((a, b) => a.t - b.t);
+  if (pts.length < 2) return null;
+  return { a: { x: pts[0].x, y: pts[0].y }, b: { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y } };
+}
+function renderBus() {
+  G.bus.innerHTML = '';
+  const line = busLine();
+  if (line) {
+    el('line', { x1: line.a.x, y1: line.a.y, x2: line.b.x, y2: line.b.y, stroke: 'rgba(0,0,0,.45)', 'stroke-width': 7, 'vector-effect': 'non-scaling-stroke', 'stroke-linecap': 'round' }, G.bus);
+    el('line', { x1: line.a.x, y1: line.a.y, x2: line.b.x, y2: line.b.y, stroke: '#9fe3ff', 'stroke-width': 3, 'stroke-dasharray': '10 8', class: 'dash-move', 'vector-effect': 'non-scaling-stroke', 'marker-end': 'url(#arrowB)' }, G.bus);
+    const bg = el('g', null, G.bus);
+    el('rect', { x: -10, y: -7, width: 20, height: 14, rx: 3, fill: '#2d7fd1', stroke: '#fff', 'stroke-width': 1.5 }, bg);
+    el('rect', { x: -6, y: -4, width: 12, height: 4, rx: 1, fill: '#cfe9ff' }, bg);
+    addScaled(bg, line.a.x, line.a.y);
+    const res = computeDrop();
+    if (res && res.best) {
+      const { earliest, latest, best } = res;
+      el('line', { x1: earliest.p.x, y1: earliest.p.y, x2: latest.p.x, y2: latest.p.y, stroke: '#5cc48b', 'stroke-width': 7, opacity: .75, 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' }, G.bus);
+      el('line', { x1: best.p.x, y1: best.p.y, x2: DROP.x, y2: DROP.y, stroke: '#f1d68e', 'stroke-width': 2.2, 'stroke-dasharray': '3 5', 'vector-effect': 'non-scaling-stroke', 'marker-end': 'url(#arrow)' }, G.bus);
+      const j = el('g', null, G.bus);
+      el('circle', { r: 9, fill: '#f1d68e', stroke: '#1a1408', 'stroke-width': 2 }, j);
+      el('path', { d: 'M0 -4V3M-3 0L0 3L3 0', stroke: '#1a1408', 'stroke-width': 1.8, fill: 'none' }, j);
+      el('circle', { r: 10, fill: 'none', stroke: '#f1d68e', 'stroke-width': 2, class: 'pulse' }, j);
+      addScaled(j, best.p.x, best.p.y);
+    }
+  }
+  if (DROP) {
+    const t = el('g', null, G.bus);
+    el('circle', { r: 11, fill: 'none', stroke: '#f1d68e', 'stroke-width': 2.2 }, t);
+    el('path', { d: 'M0 -16V-6M0 6V16M-16 0H-6M6 0H16', stroke: '#f1d68e', 'stroke-width': 2.2 }, t);
+    addScaled(t, DROP.x, DROP.y);
+  }
+  applyScales();
+}
+
+function routePath(pts) { return pts.map((p, i) => (i ? 'L' : 'M') + p.x + ' ' + p.y).join(''); }
+function drawRouteInto(g, pts, color, numbered = true, dashed = false) {
+  if (!pts.length) return;
+  if (pts.length > 1) {
+    el('path', { d: routePath(pts), fill: 'none', stroke: 'rgba(0,0,0,.5)', 'stroke-width': 7, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' }, g);
+    el('path', { d: routePath(pts), fill: 'none', stroke: color, 'stroke-width': 3.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke', 'stroke-dasharray': dashed ? '9 7' : 'none', class: dashed ? 'dash-move' : '' }, g);
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+      const ar = el('g', null, g); el('path', { d: 'M-5 -4.5L5 0L-5 4.5Z', fill: color, stroke: 'rgba(0,0,0,.6)', 'stroke-width': 1, transform: `rotate(${ang})` }, ar); addScaled(ar, mx, my);
+    }
+  }
+  if (numbered) pts.forEach((p, i) => {
+    const w = el('g', null, g);
+    el('circle', { r: 9, fill: color, stroke: '#0b0f14', 'stroke-width': 2 }, w);
+    const t = el('text', { y: 3.6, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 800, fill: '#0b0f14', 'font-family': 'ui-sans-serif,system-ui,sans-serif' }, w); t.textContent = i + 1;
+    addScaled(w, p.x, p.y);
+  });
+}
+function renderRoute() {
+  G.route.innerHTML = '';
+  drawRouteInto(G.route, ROUTE, '#f1d68e');
+  applyScales();
+}
+function renderOracle() {
+  G.oracle.innerHTML = '';
+  if (ORACLE_RES && ORACLE_RES.pts && ORACLE_RES.pts.length) drawRouteInto(G.oracle, ORACLE_RES.pts, '#5fe0c8', true, true);
+  applyScales();
+}
+function renderRuler() {
+  G.ruler.innerHTML = '';
+  if (!ruler || !ruler.a) return;
+  const g = G.ruler;
+  if (ruler.b) {
+    el('line', { x1: ruler.a.x, y1: ruler.a.y, x2: ruler.b.x, y2: ruler.b.y, stroke: '#fff', 'stroke-width': 2.5, 'stroke-dasharray': '6 4', 'vector-effect': 'non-scaling-stroke' }, g);
+    const d = dist(ruler.a, ruler.b), m = d * MPU();
+    const lg = el('g', null, g);
+    const txt = `${fmtM(d)} · run ${fmtS(m / S.footSpeed)} · drive ${fmtS(m / S.vehSpeed)}`;
+    el('rect', { x: -txt.length * 3.2 - 8, y: -24, width: txt.length * 6.4 + 16, height: 18, rx: 5, fill: 'rgba(10,14,20,.88)', stroke: '#f1d68e' }, lg);
+    const t = el('text', { y: -11.5, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#fff', 'font-family': 'ui-monospace,Menlo,monospace' }, lg); t.textContent = txt;
+    addScaled(lg, (ruler.a.x + ruler.b.x) / 2, (ruler.a.y + ruler.b.y) / 2);
+  }
+  [ruler.a, ruler.b].filter(Boolean).forEach(p => { const c = el('g', null, g); el('circle', { r: 5, fill: '#fff', stroke: '#000', 'stroke-width': 1.5 }, c); addScaled(c, p.x, p.y); });
+  applyScales();
+}
+
+function renderAll() {
+  scaleEls = [];
+  renderRoads(); renderGrid(); renderHeat(); renderLoot(); renderZone(); renderBus(); renderRoute(); renderOracle(); renderMarkers(); renderPins(); renderRuler();
+  $('#mapwrap').classList.toggle('nitemare', !!ENH.nitemare);
+  world.classList.toggle('focus-dim', !!ENH.focus && ((ROUTE && ROUTE.length) || (ORACLE_RES && ORACLE_RES.order)));
+  updateBg();
+}
+
+/* -- view transforms -- */
+let scaleRAF = 0;
+function applyScales() {
+  const inv = 1 / view.k * S.markerScale;
+  scaleEls = scaleEls.filter(s => s.g.isConnected);
+  for (const s of scaleEls) s.g.setAttribute('transform', `translate(${s.x},${s.y}) scale(${inv * s.mul})`);
+}
+function applyView() {
+  world.setAttribute('transform', `translate(${view.tx},${view.ty}) scale(${view.k})`);
+  if (!scaleRAF) scaleRAF = requestAnimationFrame(() => {
+    scaleRAF = 0; applyScales(); updateGridLabels(); updateHUD();
+    const z = view.k / fitK; svg.dataset.z = z < 1.45 ? 0 : z < 2.4 ? 1 : 2;
+  });
+}
+function fit() {
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 600;
+  fitK = Math.min(W, H) / 1000 * (W < 600 ? .9 : .96);
+  view.k = fitK; view.tx = (W - 1000 * fitK) / 2 + (W < 600 ? 20 : 0); view.ty = (H - 1000 * fitK) / 2;
+  applyView();
+}
+function zoomAt(f, sx, sy) {
+  const k2 = clamp(view.k * f, fitK * .7, fitK * 12);
+  f = k2 / view.k;
+  view.tx = sx - (sx - view.tx) * f; view.ty = sy - (sy - view.ty) * f; view.k = k2; applyView();
+}
+function flyTo(x, y, z = 3) {
+  const W = svg.clientWidth, H = svg.clientHeight, k0 = view.k, tx0 = view.tx, ty0 = view.ty;
+  const k1 = Math.max(view.k, fitK * z), tx1 = W / 2 - x * k1, ty1 = H / 2 - y * k1;
+  const t0 = performance.now(), D = 420;
+  const step = now => { const t = clamp((now - t0) / D, 0, 1), e = 1 - Math.pow(1 - t, 3); view.k = k0 + (k1 - k0) * e; view.tx = tx0 + (tx1 - tx0) * e; view.ty = ty0 + (ty1 - ty0) * e; applyView(); if (t < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const toWorld = (cx, cy) => { const r = svg.getBoundingClientRect(); return { x: (cx - r.left - view.tx) / view.k, y: (cy - r.top - view.ty) / view.k }; };
+
+let hoverPt = null;
+function updateHUD() {
+  const pxPer100m = view.k * (100 / MPU());
+  let m = 100; const opts = [10, 25, 50, 100, 250, 500, 1000];
+  for (const o of opts) { if (view.k * (o / MPU()) >= 50) { m = o; break; } m = o; }
+  const w = view.k * (m / MPU());
+  $('#hud').innerHTML = `<span class="chip scalebar"><i style="width:${Math.round(w)}px"></i>${m >= 1000 ? m / 1000 + ' km' : m + ' m'}</span>`
+    + `<span class="chip">Zoom <b>${(view.k / fitK).toFixed(1)}×</b></span>`
+    + (hoverPt ? `<span class="chip hide-sm">Grid <b>${gridRef(hoverPt.x, hoverPt.y)}</b> · ${Math.round(hoverPt.x)},${Math.round(hoverPt.y)}</span>` : '');
+}
+
+/* -- pointer handling: pan, pinch, click, calibrate drag -- */
+const ptrs = new Map(); let drag = null, pinch = null;
+function initPointer() {
+  svg.addEventListener('pointerdown', e => {
+    if (e.button === 2) return;
+    svg.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) {
+      const tg = e.target.closest('[data-id],[data-pin]');
+      drag = { sx: e.clientX, sy: e.clientY, tx: view.tx, ty: view.ty, moved: false, tg };
+      if (mode === 'calibrate' && tg && tg.dataset.id) drag.node = byId(tg.dataset.id);
+      if (mode === 'calibrate' && tg && tg.dataset.pin) drag.pin = PINS.find(p => p.id === tg.dataset.pin);
+    } else if (ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: view.k, tx: view.tx, ty: view.ty, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 };
+      drag = null;
+    }
+  });
+  svg.addEventListener('pointermove', e => {
+    hoverPt = toWorld(e.clientX, e.clientY);
+    if (!ptrs.has(e.pointerId)) { if (!scaleRAF) updateHUD(); return; }
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && ptrs.size === 2) {
+      const [a, b] = [...ptrs.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y), r = svg.getBoundingClientRect();
+      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      const k2 = clamp(pinch.k * d / pinch.d, fitK * .7, fitK * 12), f = k2 / pinch.k;
+      view.k = k2;
+      view.tx = (cx - r.left) - ((pinch.cx - r.left) - pinch.tx) * f;
+      view.ty = (cy - r.top) - ((pinch.cy - r.top) - pinch.ty) * f;
+      applyView(); return;
+    }
+    if (!drag) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; svg.classList.add('grabbing'); }
+    if (!drag.moved) return;
+    if (drag.node || drag.pin) {
+      const w = toWorld(e.clientX, e.clientY), o = drag.node || drag.pin;
+      o.x = Math.round(clamp(w.x, 0, 1000)); o.y = Math.round(clamp(w.y, 0, 1000));
+      const s = scaleEls.filter(s => s.g === drag.tg); s.forEach(s => { s.x = o.x; s.y = o.y; }); applyScales();
+      return;
+    }
+    view.tx = drag.tx + dx; view.ty = drag.ty + dy; applyView();
+  });
+  const end = e => {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId);
+    svg.classList.remove('grabbing');
+    if (pinch) { if (ptrs.size < 2) pinch = null; drag = null; return; }
+    if (drag) {
+      if (drag.moved && (drag.node || drag.pin)) {
+        if (drag.node) { saveNodeOv(drag.node.id, { x: drag.node.x, y: drag.node.y }); toast(`${drag.node.name} moved to ${gridRef(drag.node.x, drag.node.y)}`); }
+        else { store.set('pins', PINS); }
+        renderAll();
+      } else if (!drag.moved && e.type === 'pointerup') handleClick(toWorld(e.clientX, e.clientY), drag.tg);
+    }
+    drag = null;
+  };
+  svg.addEventListener('pointerup', end);
+  svg.addEventListener('pointercancel', end);
+  svg.addEventListener('pointerleave', () => { hoverPt = null; updateHUD(); });
+  svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0016)), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  svg.addEventListener('dblclick', e => { const r = svg.getBoundingClientRect(); zoomAt(1.8, e.clientX - r.left, e.clientY - r.top); });
+  svg.addEventListener('contextmenu', e => e.preventDefault());
+  $('#zin').onclick = () => zoomAt(1.5, svg.clientWidth / 2, svg.clientHeight / 2);
+  $('#zout').onclick = () => zoomAt(1 / 1.5, svg.clientWidth / 2, svg.clientHeight / 2);
+  window.addEventListener('resize', () => { if (curView === 'map') { const cx = (svg.clientWidth / 2 - view.tx) / view.k; fitKOnly(); updateGridLabels(); applyView(); } });
+}
+function fitKOnly() { const W = svg.clientWidth || 800, H = svg.clientHeight || 600; fitK = Math.min(W, H) / 1000 * (W < 600 ? .9 : .96); }
+
+function snapNode(p, r = 26) {
+  let best = null, bd = r / Math.max(1, view.k / fitK) * 1.2 + 8;
+  for (const n of NODES) { if (!markerVisible(n) && !(n.boss && LAYERS.boss)) continue; const d = dist(n, p); if (d < bd) { bd = d; best = n; } }
+  return best;
+}
+function handleClick(p, tg) {
+  const nodeId = tg && tg.dataset ? tg.dataset.id : null, pinId = tg && tg.dataset ? tg.dataset.pin : null;
+  switch (mode) {
+    case 'select':
+      if (nodeId) selectNode(nodeId);
+      else if (pinId) { selected = { kind: 'pin', id: pinId }; setPane('pins'); renderPins(); renderPane(); }
+      else { selected = null; renderMarkers(); renderPins(); }
+      break;
+    case 'bus':
+      if (!mode_tmp) { mode_tmp = { x: p.x, y: p.y }; setModeText('Click the bus <b>exit</b> point (direction of travel)'); const c = el('g', null, G.fx); el('circle', { r: 6, fill: '#9fe3ff', stroke: '#000' }, c); addScaled(c, p.x, p.y); applyScales(); }
+      else { if (dist(mode_tmp, p) < 20) { toast('Pick a point further away'); return; } BUS = { a: mode_tmp, b: { x: p.x, y: p.y } }; store.set('bus', BUS); G.fx.innerHTML = ''; setMode('select'); renderBus(); setPane('drop'); renderPane(); toast('Bus path set'); }
+      break;
+    case 'droptarget': {
+      const n = nodeId ? byId(nodeId) : snapNode(p);
+      DROP = n ? { x: n.x, y: n.y, id: n.id } : { x: Math.round(p.x), y: Math.round(p.y) };
+      store.set('drop', DROP); setMode('select'); renderBus(); setPane('drop'); renderPane();
+      break;
+    }
+    case 'build': {
+      const n = nodeId ? byId(nodeId) : snapNode(p);
+      ROUTE.push(n ? { x: n.x, y: n.y, id: n.id, label: n.name } : { x: Math.round(p.x), y: Math.round(p.y), label: 'Waypoint ' + gridRef(p.x, p.y) });
+      saveRoute(); renderRoute(); renderMarkers(); renderPane();
+      break;
+    }
+    case 'oraclestart': {
+      const n = nodeId ? byId(nodeId) : snapNode(p);
+      oracleOpts.start = n ? { id: n.id } : { x: Math.round(p.x), y: Math.round(p.y) };
+      setMode('select'); setPane('oracle'); renderPane();
+      break;
+    }
+    case 'pin': {
+      const pin = { id: uid(), type: pinType, x: Math.round(p.x), y: Math.round(p.y), label: PIN_TYPES[pinType].label + ' ' + gridRef(p.x, p.y), t: Date.now() };
+      PINS.push(pin); store.set('pins', PINS); renderPins(); renderPane();
+      break;
+    }
+    case 'ruler':
+      if (!ruler || ruler.b) ruler = { a: p, b: null }; else ruler.b = p;
+      renderRuler();
+      break;
+    case 'zone':
+      ZONE = { x: Math.round(p.x), y: Math.round(p.y), r: (ZONE && ZONE.r) || 160 };
+      store.set('zone', ZONE); renderZone(); renderPane();
+      break;
+    case 'calibrate':
+      if (nodeId) selectNode(nodeId);
+      break;
+  }
+}
+let mode_tmp = null;
+const MODE_TXT = {
+  bus: 'Click the bus <b>entry</b> point', droptarget: 'Click your <b>drop target</b> (snaps to locations)', build: 'Click to add <b>waypoints</b> (snaps to locations)',
+  pin: 'Click to place a pin', ruler: 'Click two points to measure', zone: 'Click to place the <b>safe-zone centre</b>', calibrate: '<b>Calibrate</b>: drag markers to correct positions',
+  oraclestart: 'Click the Oracle <b>start point</b>'
+};
+function setModeText(t) { $('#modetxt').innerHTML = t; }
+function setMode(m) {
+  mode = m; mode_tmp = null; if (G.fx) G.fx.innerHTML = '';
+  $('#modebar').classList.toggle('on', m !== 'select');
+  if (m !== 'select') setModeText(MODE_TXT[m] || m);
+  svg.classList.toggle('crosshair', m !== 'select' && m !== 'calibrate');
+  if (m !== 'ruler') { ruler = null; if (G.ruler) renderRuler(); }
+  renderEnh();
+  if (curView === 'map') renderPane();
+}
+
+/* =====================================================================
+   DROP CALCULATOR
+   ===================================================================== */
+function computeDrop(target = DROP, line = busLine()) {
+  if (!line || !target) return null;
+  const M = MPU(), L = dist(line.a, line.b), ux = (line.b.x - line.a.x) / L, uy = (line.b.y - line.a.y) / L;
+  let best = null, earliest = null, latest = null, closest = null;
+  for (let s = 0; s <= L; s += 2) {
+    const p = { x: line.a.x + ux * s, y: line.a.y + uy * s };
+    const dH = dist(p, target) * M;
+    if (!closest || dH < closest.dH) closest = { s, p, dH };
+    if (dH > S.maxReach) continue;
+    const tBus = s * M / S.busSpeed, tFly = S.baseDescent + dH / S.glideSpeed, T = tBus + tFly;
+    const o = { s, p, tBus, tFly, T, dH };
+    if (!earliest) earliest = o; latest = o;
+    if (!best || T < best.T - 1e-6) best = o;
+  }
+  const busTotal = L * M / S.busSpeed;
+  return { best, earliest, latest, closest, busTotal, L };
+}
+function rankDrops() {
+  const line = busLine(); if (!line) return [];
+  return NODES.filter(n => n.type === 'poi' || (n.type === 'lm' && n.chests >= 6)).map(n => {
+    const r = computeDrop(n, line); if (!r || !r.best) return null;
+    const score = Math.pow(n.chests, .6) * 4 + (n.boss ? 6 : 0) + (n.vault ? 6 : 0) - n.ppg * 2.2 - r.best.T * .12;
+    return { n, r, score };
+  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 8);
+}
+let liveTimer = null;
+function beep(f = 880, d = .12) {
+  if (!S.sound) return;
+  try { const A = beep.ctx || (beep.ctx = new (window.AudioContext || window.webkitAudioContext)()); const o = A.createOscillator(), g = A.createGain(); o.frequency.value = f; o.type = 'square'; g.gain.setValueAtTime(.06, A.currentTime); g.gain.exponentialRampToValueAtTime(.0001, A.currentTime + d); o.connect(g).connect(A.destination); o.start(); o.stop(A.currentTime + d); } catch (e) {}
+}
+function startLive() {
+  const res = computeDrop(); if (!res || !res.best) { toast('Set a bus path and reachable target first'); return; }
+  stopLive(true);
+  const t0 = performance.now(), jumpAt = res.best.tBus, landAt = res.best.T;
+  const lastBeep = { v: null };
+  liveTimer = { raf: 0 };
+  const tick = () => {
+    const el2 = $('#livetimer'), sub = $('#livesub');
+    const t = (performance.now() - t0) / 1000;
+    if (!el2) { liveTimer.raf = requestAnimationFrame(tick); return; }
+    const toJump = jumpAt - t;
+    if (toJump > 0) {
+      el2.textContent = toJump.toFixed(1); el2.classList.remove('jump'); sub.textContent = 'seconds until JUMP';
+      const w = Math.ceil(toJump); if (w <= 3 && w !== lastBeep.v) { lastBeep.v = w; beep(660); if (S.haptics && navigator.vibrate) navigator.vibrate(40); }
+    } else if (t < landAt) {
+      el2.textContent = 'JUMP'; el2.classList.add('jump'); sub.textContent = `Landing in ${(landAt - t).toFixed(1)}s`;
+      if (lastBeep.v !== 'J') { lastBeep.v = 'J'; beep(1180, .35); if (S.haptics && navigator.vibrate) navigator.vibrate([90, 60, 90]); }
+    } else { el2.textContent = 'LANDED'; el2.classList.remove('jump'); sub.textContent = 'Go loot.'; liveTimer = null; renderLiveBtn(); return; }
+    liveTimer.raf = requestAnimationFrame(tick);
+  };
+  liveTimer.raf = requestAnimationFrame(tick);
+  renderLiveBtn();
+}
+function stopLive(silent) { if (liveTimer) cancelAnimationFrame(liveTimer.raf); liveTimer = null; if (!silent) { const e = $('#livetimer'); if (e) { e.textContent = '--'; e.classList.remove('jump'); } renderLiveBtn(); } }
+function renderLiveBtn() { const b = $('#livebtn'); if (b) b.innerHTML = liveTimer ? ico('stop') + 'Stop timer' : ico('play') + 'Doors open — start'; }
+function randomBus() {
+  const r = Math.random() * Math.PI * 2, off = (Math.random() - .5) * 360;
+  const cx = 500 + Math.cos(r + Math.PI / 2) * off, cy = 500 + Math.sin(r + Math.PI / 2) * off;
+  BUS = { a: { x: cx - Math.cos(r) * 400, y: cy - Math.sin(r) * 400 }, b: { x: cx + Math.cos(r) * 400, y: cy + Math.sin(r) * 400 } };
+  store.set('bus', BUS); renderBus(); renderPane();
+}
+
+/* =====================================================================
+   ORACLE — loot route AI (orienteering under time budget)
+   ===================================================================== */
+let oracleOpts = Object.assign({ start: null, budget: null, travel: 'foot', wLoot: 7, wMythic: 5, wSafety: 4, types: { poi: true, lm: true, isle: false, console: false }, endZone: true, restarts: 260 }, store.get('oracle', {}));
+function nodeValue(n, o) {
+  const loot = Math.pow(Math.max(0, n.chests || 0), .62) * 3.2;
+  const myth = (n.boss ? 16 : 0) + (n.vault ? 18 : 0);
+  const risk = (n.ppg || 0) * 2.4 - (n.empty || 0) / 12;
+  return Math.max(.5, o.wLoot / 5 * loot + o.wMythic / 5 * myth - o.wSafety / 5 * risk);
+}
+function nodeDwell(n, o) { let d = n.type === 'poi' ? S.dwellPOI : S.dwellLM; if (n.boss && o.wMythic >= 4) d += S.bossTime; return Math.min(d, (n.chests || 1) * S.secPerChest + 10); }
+function runOracle(o) {
+  const M = MPU(), speed = o.travel === 'vehicle' ? S.vehSpeed : S.footSpeed, budget = o.budget || S.budget;
+  let start = null, startNode = null;
+  if (o.start && o.start.id) { startNode = byId(o.start.id); start = startNode; }
+  else if (o.start) start = o.start;
+  else if (DROP) { startNode = DROP.id ? byId(DROP.id) : null; start = startNode || DROP; }
+  else return { err: 'Choose a start point (or set a drop target).' };
+  const cands = NODES.filter(n => o.types[n.type] && n !== startNode && (n.chests > 0 || n.boss));
+  const V = new Map(cands.map(n => [n.id, nodeValue(n, o)])), Dw = new Map(cands.map(n => [n.id, nodeDwell(n, o)]));
+  const tt = (a, b) => dist(a, b) * M * 1.12 / speed;
+  const zoneEnd = o.endZone && ZONE;
+  const endCost = p => { if (!zoneEnd) return 0; const d = dist(p, ZONE) - ZONE.r * .85; return d > 0 ? d * M * 1.12 / speed : 0; };
+  const startDwell = startNode ? nodeDwell(startNode, o) : 0, startVal = startNode ? nodeValue(startNode, o) : 0;
+  const evalT = ord => { let t = startDwell, p = start; for (const n of ord) { t += tt(p, n) + Dw.get(n.id); p = n; } return t + endCost(p); };
+  const evalV = ord => ord.reduce((s, n) => s + V.get(n.id), startVal);
+  let best = null; const seen = [];
+  const rnd = mulberry32(1234 + Math.floor(budget) + o.wLoot * 7 + o.wMythic * 13 + o.wSafety * 17);
+  for (let r = 0; r < o.restarts; r++) {
+    const noise = r === 0 ? 0 : .55;
+    let ord = [], T = evalT(ord), pool = cands.slice();
+    // randomised cheapest-insertion by value / added-time ratio
+    for (;;) {
+      let pick = null;
+      for (const n of pool) {
+        let bestPos = -1, bestAdd = Infinity;
+        for (let i = 0; i <= ord.length; i++) {
+          const prev = i === 0 ? start : ord[i - 1], next = ord[i];
+          let add = tt(prev, n) + Dw.get(n.id) + (next ? tt(n, next) - tt(prev, next) : 0);
+          if (!next) add += endCost(n) - endCost(prev);
+          if (add < bestAdd) { bestAdd = add; bestPos = i; }
+        }
+        if (T + bestAdd > budget) continue;
+        const ratio = V.get(n.id) / Math.max(1, bestAdd) * (1 + (rnd() - .5) * 2 * noise);
+        if (!pick || ratio > pick.ratio) pick = { n, pos: bestPos, add: bestAdd, ratio };
+      }
+      if (!pick) break;
+      ord.splice(pick.pos, 0, pick.n); pool = pool.filter(x => x !== pick.n); T = evalT(ord);
+    }
+    // 2-opt
+    let improved = true;
+    while (improved) {
+      improved = false;
+      for (let i = 0; i < ord.length - 1; i++) for (let j = i + 1; j < ord.length; j++) {
+        const c = ord.slice(0, i).concat(ord.slice(i, j + 1).reverse(), ord.slice(j + 1));
+        const t2 = evalT(c); if (t2 < T - .01) { ord = c; T = t2; improved = true; }
+      }
+    }
+    // swap-in: replace one visited with an unvisited of higher value if feasible
+    for (let pass = 0; pass < 2; pass++) for (const n of cands) {
+      if (ord.includes(n)) continue;
+      for (let i = 0; i < ord.length; i++) {
+        if (V.get(n.id) <= V.get(ord[i].id)) continue;
+        const c = ord.slice(); c[i] = n; const t2 = evalT(c);
+        if (t2 <= budget) { ord = c; T = t2; break; }
+      }
+    }
+    const val = evalV(ord);
+    const key = ord.map(n => n.id).join('>');
+    if (!seen.some(s => s.key === key)) seen.push({ key, ord, val, T });
+    if (!best || val > best.val + 1e-6 || (Math.abs(val - best.val) < 1e-6 && T < best.T)) best = { ord, val, T };
+  }
+  seen.sort((a, b) => b.val - a.val || a.T - b.T);
+  const alts = seen.filter(s => s.key !== best.ord.map(n => n.id).join('>')).slice(0, 2);
+  // build legs
+  const legs = []; let t = startDwell, p = start;
+  if (startNode) legs.push({ n: startNode, arrive: 0, dwell: startDwell, val: startVal, travel: 0 });
+  for (const n of best.ord) { const tr = tt(p, n); t += tr; legs.push({ n, arrive: t, dwell: Dw.get(n.id), val: V.get(n.id), travel: tr }); t += Dw.get(n.id); p = n; }
+  const pts = [start].concat(best.ord).map(n => ({ x: n.x, y: n.y }));
+  return { start, startNode, order: [startNode && startNode.id].concat(best.ord.map(n => n.id)).filter(Boolean), legs, val: best.val, T: best.T, budget, pts, alts, scanned: cands, V, endCost: endCost(p), speed };
+}
+async function oracleScan() {
+  const btn = $('#oraclerun'); if (btn) btn.disabled = true;
+  const con = $('#oraclecon'); const log = (s, c = '') => { if (con) { con.innerHTML += `<span class="${c}">${s}</span>\n`; con.scrollTop = con.scrollHeight; } };
+  if (con) con.innerHTML = '';
+  oracleOpts.budget = +($('#o-budget') || {}).value || S.budget;
+  store.set('oracle', oracleOpts);
+  log('ORACLE v1 · route intelligence online', 'g');
+  const res = runOracle(oracleOpts);
+  if (res.err) { log('✖ ' + res.err, 'r'); if (btn) btn.disabled = false; return; }
+  log(`Start: ${res.startNode ? res.startNode.name : gridRef(res.start.x, res.start.y)} · budget ${fmtS(res.budget)} · ${oracleOpts.travel} @ ${res.speed} m/s`, 'd');
+  // visual scan: sweep ring + reveal nodes in order of distance
+  G.fx.innerHTML = '';
+  const ring = el('circle', { cx: res.start.x, cy: res.start.y, r: 1, class: 'scan-ring', 'vector-effect': 'non-scaling-stroke' }, G.fx);
+  const sorted = res.scanned.slice().sort((a, b) => dist(a, res.start) - dist(b, res.start));
+  const maxD = Math.max(60, ...sorted.map(n => dist(n, res.start)));
+  const D = 1300, t0 = performance.now(); let idx = 0;
+  await new Promise(done => {
+    const step = now => {
+      const k = clamp((now - t0) / D, 0, 1), R = k * maxD;
+      ring.setAttribute('r', R); ring.setAttribute('opacity', 1 - k * .6);
+      while (idx < sorted.length && dist(sorted[idx], res.start) <= R) {
+        const n = sorted[idx++];
+        const c = el('g', null, G.fx); el('circle', { r: 12, fill: 'none', stroke: '#5fe0c8', 'stroke-width': 1.5, class: 'pulse' }, c); addScaled(c, n.x, n.y); applyScales();
+        if (idx % 2 === 0 || n.type === 'poi') log(`  scan ${n.name.padEnd(24).slice(0, 24)} v=${fmt1(res.V.get(n.id)).padStart(5)} d=${fmtM(dist(n, res.start))}`, 'd');
+      }
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  });
+  log(`Evaluated ${res.scanned.length} destinations × ${oracleOpts.restarts} search restarts`, 'd');
+  log(`✔ Optimal route: ${res.legs.length} stops · value ${fmt1(res.val)} · ${fmtS(res.T)} of ${fmtS(res.budget)}`, 'g');
+  setTimeout(() => { G.fx.innerHTML = ''; }, 900);
+  ORACLE_RES = res; renderOracle(); renderMarkers(); renderOracleResult();
+  if (btn) btn.disabled = false;
+}
+
+/* =====================================================================
+   ROUTE BUILDER + SLOTS
+   ===================================================================== */
+function saveRoute() { store.set('route', ROUTE); }
+function routeStats(pts, travel = 'foot') {
+  const M = MPU(), sp = travel === 'vehicle' ? S.vehSpeed : S.footSpeed;
+  let d = 0, dwell = 0, chests = 0, ppg = 0, bosses = 0;
+  pts.forEach((p, i) => { if (i) d += dist(pts[i - 1], p); const n = p.id && byId(p.id); if (n) { dwell += nodeDwell(n, oracleOpts); chests += n.chests || 0; ppg += n.ppg || 0; if (n.boss) bosses++; } });
+  return { d, run: d * M * 1.12 / sp, dwell, total: d * M * 1.12 / sp + dwell, chests, ppg, bosses };
+}
+function optimiseRoute() {
+  if (ROUTE.length < 4) { toast('Need at least 4 waypoints to optimise'); return; }
+  let ord = ROUTE.slice(), L = r => r.reduce((s, p, i) => s + (i ? dist(r[i - 1], p) : 0), 0), best = L(ord), imp = true;
+  while (imp) { imp = false; for (let i = 1; i < ord.length - 1; i++) for (let j = i + 1; j < ord.length; j++) { const c = ord.slice(0, i).concat(ord.slice(i, j + 1).reverse(), ord.slice(j + 1)); const l = L(c); if (l < best - .01) { ord = c; best = l; imp = true; } } }
+  const saved = L(ROUTE) - best; ROUTE = ord; saveRoute(); renderRoute(); renderPane();
+  toast(saved > 1 ? `Order optimised — saved ${fmtM(saved)}` : 'Already optimal');
+}
+function slotPick(pts, defName, source) {
+  return new Promise(res => {
+    const rows = SLOTS.map((s, i) => `<button class="wp" data-i="${i}" style="width:100%;text-align:left;cursor:pointer"><span class="n">${i + 1}</span><span class="wn"><b>${s ? esc(s.name) : 'Empty slot'}</b><span>${s ? `${s.pts.length} stops · ${new Date(s.t).toLocaleDateString()}` : 'Available'}</span></span>${s ? '<span class="tag est">Overwrite</span>' : ''}</button>`).join('');
+    modal(`<h2>Save route</h2><div class="field" style="margin:12px 0"><label>Route name</label><input class="inp" id="sp-name" value="${esc(defName)}" maxlength="40"></div><div class="lbl" style="margin-bottom:6px">Choose a slot</div>${rows}<div class="acts"><button class="btn ghost" data-a="no">Cancel</button></div>`, (box, close) => {
+      box.querySelector('[data-a=no]').onclick = () => { close(); res(false); };
+      box.querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
+        const i = +b.dataset.i, name = box.querySelector('#sp-name').value.trim() || defName;
+        SLOTS[i] = { name, pts: pts.map(p => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id || null, label: p.label || (p.id && byId(p.id) ? byId(p.id).name : '') })), t: Date.now(), source };
+        store.set('slots', SLOTS); close(); toast(`Saved to slot ${i + 1}`); res(true);
+        if (curView === 'routes') renderRoutes();
+      });
+    });
+  });
+}
+const encodeRoute = r => btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, n: r.name, p: r.pts.map(p => [p.x, p.y, p.id || 0]) }))));
+function decodeRoute(code) {
+  const o = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+  if (!o || !Array.isArray(o.p)) throw new Error('bad');
+  return { name: String(o.n || 'Imported route').slice(0, 40), pts: o.p.map(a => ({ x: clamp(+a[0], 0, 1000), y: clamp(+a[1], 0, 1000), id: a[2] || null, label: a[2] && byId(a[2]) ? byId(a[2]).name : 'Waypoint' })), t: Date.now(), source: 'import' };
+}
+function loadSlot(i) {
+  const s = SLOTS[i]; if (!s) return;
+  ROUTE = s.pts.map(p => Object.assign({}, p)); saveRoute();
+  go('map'); setPane('builder'); renderAll(); renderPane();
+  const xs = ROUTE.map(p => p.x), ys = ROUTE.map(p => p.y);
+  if (ROUTE.length) setTimeout(() => flyTo((Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2, 1.4), 60);
+  toast(`Loaded “${s.name}”`);
+}
+
+/* =====================================================================
+   PANEL
+   ===================================================================== */
+const PANES = [['layers', 'Layers', 'layers'], ['info', 'Intel', 'info'], ['drop', 'Drop', 'drop'], ['oracle', 'Oracle', 'oracle'], ['builder', 'Builder', 'route'], ['pins', 'Pins', 'pin']];
+function renderTabs() {
+  $('#ptabs').innerHTML = PANES.map(([id, l, i]) => `<button role="tab" data-pane="${id}" class="${curPane === id ? 'on' : ''}">${ico(i)}${l}</button>`).join('') + `<button class="mobile-panel-toggle" id="ptoggle" aria-label="Collapse panel">${ico('down')}</button>`;
+  $$('#ptabs [data-pane]').forEach(b => b.onclick = () => { setPane(b.dataset.pane); $('#panel').classList.remove('collapsed'); });
+  $('#ptoggle').onclick = () => { $('#panel').classList.toggle('collapsed'); setTimeout(() => { fitKOnly(); applyView(); }, 240); };
+}
+function setPane(p) { curPane = p; store.set('pane', p); renderTabs(); renderPane(); }
+function renderPane() {
+  const b = $('#pbody');
+  const fn = { layers: paneLayers, info: paneInfo, drop: paneDrop, oracle: paneOracle, builder: paneBuilder, pins: panePins }[curPane] || paneLayers;
+  b.innerHTML = `<div class="pane on">${fn()}</div>`;
+  bindPane(curPane);
+}
+function legendIcon(id, c) {
+  const m = { poi: `<svg viewBox="-11 -11 22 22" width="18"><path d="M0 -9L9 0L0 9L-9 0Z" fill="#141c26" stroke="#f1d68e" stroke-width="2"/><path d="M0 -4L4 0L0 4L-4 0Z" fill="#d3ad58"/></svg>`, boss: `<svg viewBox="-10 -10 20 20" width="18"><circle r="8.5" fill="#7a1b17" stroke="#ff8b80" stroke-width="1.6"/><path d="M-5 2.5L-5 -3L-2.5 -0.5L0 -4.5L2.5 -0.5L5 -3L5 2.5Z" fill="#ffd7d2"/></svg>`, vault: `<svg viewBox="-9 -9 18 18" width="16"><rect x="-7" y="-7" width="14" height="14" rx="3" fill="#4a3a12" stroke="#f1d68e" stroke-width="1.6"/><circle cy="-1.2" r="2.2" fill="#f1d68e"/></svg>`, console: `<svg viewBox="-8 -8 16 16" width="16"><path d="M0 -7L6 -3.5V3.5L0 7L-6 3.5V-3.5Z" fill="#2a1d4a" stroke="#c9a8ff" stroke-width="1.8"/></svg>` };
+  return m[id] || `<span style="width:12px;height:12px;border-radius:50%;background:${c};display:block;box-shadow:0 0 0 2px rgba(0,0,0,.4)"></span>`;
+}
+function paneLayers() {
+  return `<div class="sec searchbox">${ico('search')}<input class="inp" id="nsearch" placeholder="Search locations, bosses, grid (e.g. D4)…" autocomplete="off"><div class="sresults" id="sres"></div></div>
+  <div class="sec"><div class="sec-h"><h3>Map layers</h3><span class="row"><button class="btn sm ghost" id="lall">All</button><button class="btn sm ghost" id="lnone">None</button></span></div>
+  ${LAYER_DEFS.map(([id, n, d, c]) => `<div class="lrow"><span class="lic">${legendIcon(id, c)}</span><span class="lt"><b>${n}</b><span>${d}</span></span><label class="sw"><input type="checkbox" data-layer="${id}" ${LAYERS[id] ? 'checked' : ''}><i></i></label></div>`).join('')}</div>
+  <div class="sec"><h3 style="margin-bottom:8px">Tools</h3><div class="row">
+    <button class="btn sm ${mode === 'calibrate' ? 'on' : ''}" id="tcal">${ico('move')}Calibrate positions</button>
+    <button class="btn sm" data-go2="settings">${ico('ul')}Use official map image</button></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Positions are approximate. Import a screenshot of the official map in Settings, then drag markers in Calibrate mode — changes save automatically.</p></div>`;
+}
+function infoFor(n) {
+  const rank = NODES.filter(x => x.type === 'poi').sort((a, b) => b.ppg - a.ppg).findIndex(x => x.id === n.id) + 1;
+  const eff = n.chests ? n.chests / (n.ppg + .5) : 0;
+  return `<div class="info-head"><div class="info-ic">${legendIcon(n.type === 'poi' ? 'poi' : n.type === 'console' ? 'console' : 'x', n.type === 'isle' ? '#53b8c6' : '#e9eef4')}</div>
+    <div style="min-width:0"><div class="eyebrow">${TYPE_LABEL[n.type]} · Grid ${gridRef(n.x, n.y)}</div><h2 style="margin-top:2px">${esc(n.name)}</h2>
+    <div class="row" style="margin-top:6px">${n.est ? '<span class="tag est">Chests est.</span>' : '<span class="tag gold">Wiki counts</span>'}${rank && n.type === 'poi' ? `<span class="tag">#${rank} most contested</span>` : ''}${n.boss ? '<span class="tag red">Boss</span>' : ''}${n.vault ? '<span class="tag gold">Vault</span>' : ''}</div></div></div>
+    <div class="statgrid">
+      <div class="kpi gold"><div class="k">Chests</div><div class="v">${n.chests ?? '—'}${n.est ? '<span class="dim" style="font-size:12px">~</span>' : ''}</div></div>
+      <div class="kpi"><div class="k">Players/game</div><div class="v">${n.ppg != null ? n.ppg.toFixed(2) : '—'}</div></div>
+      <div class="kpi"><div class="k">Uncontested</div><div class="v">${n.empty != null ? n.empty + '%' : '—'}</div></div>
+      <div class="kpi"><div class="k">Air time</div><div class="v">${n.air != null ? n.air + 's' : '—'}</div></div>
+      <div class="kpi"><div class="k">Ammo / Vend</div><div class="v">${n.ammo ?? '—'} / ${n.vend ?? '—'}</div></div>
+      <div class="kpi"><div class="k">Loot / rival</div><div class="v">${eff ? fmt1(eff) : '—'}</div></div>
+    </div>
+    ${n.boss ? `<div class="boss"><span style="color:var(--danger)">${ico('crown')}</span><div><b>${esc(n.boss.name)}</b><div class="muted" style="font-size:12.5px">Drops: ${esc(n.boss.drop)}</div></div></div>` : ''}
+    ${n.vault ? `<div class="boss vault"><span style="color:var(--gold)">${ico('key')}</span><div style="font-size:12.5px">${esc(n.vault)}</div></div>` : ''}
+    ${n.note ? `<div class="note">${esc(n.note)}</div>` : ''}
+    <div class="row" style="margin-top:12px">
+      <button class="btn sm pri" data-act="droptgt">${ico('target')}Drop target</button>
+      <button class="btn sm" data-act="addroute">${ico('route')}Add to route</button>
+      <button class="btn sm" data-act="oraclefrom">${ico('oracle')}Oracle from here</button>
+    </div>`;
+}
+function paneInfo() {
+  if (selected && selected.kind === 'node') { const n = byId(selected.id); if (n) return infoFor(n); }
+  const top = NODES.filter(n => n.type === 'poi').sort((a, b) => b.ppg - a.ppg);
+  return `<div class="sec"><h3>Location intel</h3><p class="muted" style="font-size:12.5px;margin:6px 0 10px">Tap any marker for full intel. Ranked by average players landing per game.</p>
+    <table class="t"><thead><tr><th>Location</th><th>Chests</th><th>Contest</th></tr></thead><tbody>
+    ${top.map(n => `<tr class="click" data-sel="${n.id}"><td><b>${esc(n.name)}</b>${n.boss ? ' <span style="color:var(--danger)">♛</span>' : ''}</td><td>${n.chests}${n.est ? '~' : ''}</td><td><div class="bar red"><i style="width:${n.ppg / 5.6 * 100}%"></i></div></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="sec"><h3 style="margin-bottom:8px">Bosses & mythics</h3>${NODES.filter(n => n.boss).map(n => `<div class="boss" style="cursor:pointer" data-sel="${n.id}"><span style="color:var(--danger)">${ico('crown')}</span><div><b>${esc(n.boss.name)}</b> <span class="dim">· ${esc(n.name)}</span><div class="muted" style="font-size:12.5px">${esc(n.boss.drop)}</div></div></div>`).join('')}
+    <p class="dim" style="font-size:11.5px">Every boss has a chance to drop a 1-UP Token (extra life — respawn from a Rift with weapons but no shield).</p></div>`;
+}
+function paneDrop() {
+  const res = computeDrop(), tn = DROP && DROP.id ? byId(DROP.id) : null;
+  const tName = DROP ? (tn ? tn.name : 'Custom point ' + gridRef(DROP.x, DROP.y)) : 'Not set';
+  let out = `<div class="sec"><h3>1 · Battle Bus path</h3><p class="muted" style="font-size:12.5px;margin:6px 0 8px">Trace the bus line shown in the pre-game map: entry point, then exit point.</p>
+    <div class="row"><button class="btn sm ${mode === 'bus' ? 'on' : ''}" id="dbus">${ico('bus')}${BUS ? 'Redraw path' : 'Draw bus path'}</button><button class="btn sm" id="drand">${ico('dice')}Random</button>${BUS ? `<button class="btn sm ghost" id="dclear">${ico('x')}Clear</button>` : ''}</div></div>
+    <div class="sec"><h3>2 · Drop target</h3><div class="row" style="margin-top:8px"><select class="inp" id="dsel" style="flex:1;min-width:0"><option value="">Choose location…</option>${NODES.filter(n => n.type !== 'console').map(n => `<option value="${n.id}" ${DROP && DROP.id === n.id ? 'selected' : ''}>${esc(n.name)}</option>`).join('')}</select><button class="btn sm ${mode === 'droptarget' ? 'on' : ''}" id="dpick">${ico('target')}Pick</button></div>
+    <div class="dim" style="font-size:12px;margin-top:6px">Target: <b style="color:var(--text)">${esc(tName)}</b></div></div>`;
+  if (!BUS || !DROP || !res) return out + `<div class="empty">Set a bus path and a target to calculate your jump.</div>`;
+  if (!res.best) return out + `<div class="notice"><b>Out of glide range.</b> Closest the bus gets is ${Math.round(res.closest.dH)} m; max reach is ${S.maxReach} m. Pick a nearer target or raise max reach in Settings.</div>`;
+  const b = res.best, ppg = tn ? tn.ppg : null;
+  out += `<div class="sec"><h3>3 · Jump plan</h3><div class="grid g2" style="margin-top:8px">
+      <div class="kpi gold"><div class="k">Jump at</div><div class="v">+${b.tBus.toFixed(1)}s</div><div class="s">after doors open</div></div>
+      <div class="kpi"><div class="k">On ground</div><div class="v">+${b.T.toFixed(1)}s</div><div class="s">${b.tFly.toFixed(1)}s in the air</div></div>
+      <div class="kpi"><div class="k">Jump window</div><div class="v">${res.earliest.tBus.toFixed(0)}–${res.latest.tBus.toFixed(0)}s</div><div class="s">green segment on map</div></div>
+      <div class="kpi"><div class="k">Glide distance</div><div class="v">${Math.round(b.dH)} m</div><div class="s">Grid ${gridRef(b.p.x, b.p.y)} → ${gridRef(DROP.x, DROP.y)}</div></div>
+    </div>
+    ${ppg != null ? `<div class="notice" style="margin-top:10px"><b>Expect ~${ppg.toFixed(1)} players</b> landing here per game; ${tn.empty}% of games it's uncontested. Median real-world air time: ${tn.air}s.</div>` : ''}
+    <div class="note">Leave the bus when it reaches the gold jump marker — roughly when your target is ${Math.round(b.dH)} m away${b.dH < 200 ? ' (almost directly below you)' : ''}. Jumping earlier than the window means you can't reach it; later costs time.</div></div>
+    <div class="sec card crest" style="padding:12px"><div class="spread"><h3>Live jump timer</h3><span class="tag arc">Audio + haptic</span></div>
+      <div class="timer" id="livetimer">${b.tBus.toFixed(1)}</div><div class="dim" id="livesub" style="text-align:center;font-size:12px;margin-bottom:10px">Press when the bus doors open</div>
+      <button class="btn pri" id="livebtn" style="width:100%"></button></div>`;
+  const ranks = rankDrops();
+  out += `<div class="sec"><h3 style="margin-bottom:6px">Best drops on this bus</h3><table class="t"><thead><tr><th>Location</th><th>Land</th><th>Rivals</th></tr></thead><tbody>
+    ${ranks.map(r => `<tr class="click" data-drop="${r.n.id}"><td><b>${esc(r.n.name)}</b>${r.n.boss ? ' <span style="color:var(--danger)">♛</span>' : ''}</td><td class="mono">${r.r.best.T.toFixed(0)}s</td><td class="mono">${r.n.ppg.toFixed(1)}</td></tr>`).join('')}</tbody></table>
+    <div class="dim" style="font-size:11.5px;margin-top:6px">Ranked by loot, mythics, landing speed and contest.</div></div>`;
+  return out;
+}
+function paneOracle() {
+  const o = oracleOpts, sn = o.start && o.start.id ? byId(o.start.id) : null;
+  const startLbl = sn ? sn.name : o.start ? 'Point ' + gridRef(o.start.x, o.start.y) : DROP ? 'Drop target' + (DROP.id && byId(DROP.id) ? ' (' + byId(DROP.id).name + ')' : '') : 'Not set';
+  return `<div class="sec"><div class="spread"><h3>Oracle · Best loot route</h3><span class="tag arc">AI</span></div>
+    <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Scans every destination, weighs loot, mythics and danger, then solves the highest-value path that fits your time budget.</p>
+    <div class="field"><label>Start</label><div class="row"><select class="inp" id="o-start" style="flex:1;min-width:0"><option value="">${DROP ? 'Use drop target' : 'Choose…'}</option>${NODES.filter(n => n.type !== 'console').map(n => `<option value="${n.id}" ${sn && sn.id === n.id ? 'selected' : ''}>${esc(n.name)}</option>`).join('')}</select><button class="btn sm ${mode === 'oraclestart' ? 'on' : ''}" id="o-pick">${ico('target')}Pick</button></div><div class="dim" style="font-size:12px">Current: <b style="color:var(--text)">${esc(startLbl)}</b></div></div></div>
+    <div class="sec"><div class="field"><label>Time budget · <span id="o-bv" class="mono">${fmtS(o.budget || S.budget)}</span></label><input type="range" id="o-budget" min="60" max="600" step="15" value="${o.budget || S.budget}"></div></div>
+    <div class="sec"><div class="lbl" style="margin-bottom:6px">Travel</div><div class="seg" id="o-travel"><button data-v="foot" class="${o.travel === 'foot' ? 'on' : ''}">On foot</button><button data-v="vehicle" class="${o.travel === 'vehicle' ? 'on' : ''}">Vehicle</button></div></div>
+    <div class="sec"><div class="lbl" style="margin-bottom:6px">Priorities</div>
+      ${[['wLoot', 'Loot (chests)'], ['wMythic', 'Mythics & bosses'], ['wSafety', 'Safety (avoid players)']].map(([k, l]) => `<div class="field" style="margin-bottom:6px"><div class="spread"><span style="font-size:12.5px">${l}</span><span class="mono dim" id="v-${k}">${o[k]}</span></div><input type="range" min="0" max="10" step="1" data-w="${k}" value="${o[k]}"></div>`).join('')}</div>
+    <div class="sec"><div class="lbl" style="margin-bottom:6px">Destinations to scan</div><div class="chips">${[['poi', 'Named'], ['lm', 'Landmarks'], ['isle', 'Islands'], ['console', 'Consoles']].map(([k, l]) => `<button class="chipb ${o.types[k] ? 'on' : ''}" data-ot="${k}">${l}</button>`).join('')}</div>
+      <div class="lrow" style="margin-top:8px"><span class="lt"><b>Finish inside safe zone</b><span>${ZONE ? 'Zone set at ' + gridRef(ZONE.x, ZONE.y) : 'Set a zone with the zone tool'}</span></span><label class="sw"><input type="checkbox" id="o-zone" ${o.endZone ? 'checked' : ''} ${ZONE ? '' : 'disabled'}><i></i></label></div></div>
+    <button class="btn pri" id="oraclerun" style="width:100%;min-height:42px">${ico('oracle')}Run Oracle scan</button>
+    <div class="console" id="oraclecon" style="margin-top:10px">Awaiting scan…</div>
+    <div id="oracleres" style="margin-top:12px"></div>`;
+}
+function renderOracleResult() {
+  const box = $('#oracleres'); if (!box || !ORACLE_RES) return;
+  const r = ORACLE_RES;
+  const chests = r.legs.reduce((s, l) => s + (l.n.chests || 0), 0), bosses = r.legs.filter(l => l.n.boss).length, rivals = r.legs.reduce((s, l) => s + (l.n.ppg || 0), 0);
+  box.innerHTML = `<div class="grid g3"><div class="kpi gold"><div class="k">Stops</div><div class="v">${r.legs.length}</div></div><div class="kpi"><div class="k">Time</div><div class="v">${fmtS(r.T)}</div></div><div class="kpi"><div class="k">Chests</div><div class="v">${chests}</div></div></div>
+    <div class="dim" style="font-size:12px;margin:8px 0">${bosses} boss${bosses === 1 ? '' : 'es'} · ~${rivals.toFixed(1)} rival landings across stops${r.endCost > 0 ? ` · ${fmtS(r.endCost)} rotation into zone included` : ''}</div>
+    ${r.legs.map((l, i) => `<div class="wp"><span class="n" style="background:#5fe0c8">${i + 1}</span><span class="wn"><b>${esc(l.n.name)}</b><span>arrive ${fmtS(l.arrive)} · loot ${fmtS(l.dwell)} · ${l.n.chests}${l.n.est ? '~' : ''} chests${l.n.boss ? ' · ♛ ' + esc(l.n.boss.name) : ''}</span></span><span class="mono dim" style="font-size:11px">${gridRef(l.n.x, l.n.y)}</span></div>`).join('')}
+    <div class="row" style="margin-top:8px"><button class="btn sm pri" id="o-save">${ico('save')}Save to slot</button><button class="btn sm" id="o-edit">${ico('edit')}Edit in Builder</button><button class="btn sm ghost" id="o-clear">${ico('x')}Clear</button></div>
+    ${r.alts.length ? `<div class="lbl" style="margin:12px 0 6px">Alternatives considered</div>${r.alts.map((a, i) => `<button class="wp" data-alt="${i}" style="width:100%;text-align:left;cursor:pointer"><span class="n" style="background:var(--line2);color:var(--text)">${String.fromCharCode(65 + i)}</span><span class="wn"><b>${a.ord.map(n => n.name).join(' → ') || '(start only)'}</b><span>value ${fmt1(a.val)} vs ${fmt1(r.val)} · ${fmtS(a.T)}</span></span></button>`).join('')}` : ''}`;
+  const ids = r.startNode ? r.order : [null].concat(r.order);
+  const asPts = () => r.pts.map((p, i) => ({ x: p.x, y: p.y, id: ids[i] || null, label: ids[i] && byId(ids[i]) ? byId(ids[i]).name : 'Start ' + gridRef(p.x, p.y) }));
+  $('#o-save').onclick = () => slotPick(asPts(), 'Oracle · ' + (r.startNode ? r.startNode.name : 'route'), 'oracle');
+  $('#o-edit').onclick = () => { ROUTE = asPts(); saveRoute(); ORACLE_RES = null; renderAll(); setPane('builder'); };
+  $('#o-clear').onclick = () => { ORACLE_RES = null; renderOracle(); renderMarkers(); box.innerHTML = ''; };
+  $$('[data-alt]', box).forEach(b => b.onclick = () => { const a = r.alts[+b.dataset.alt]; const pts = [r.start].concat(a.ord).map(n => ({ x: n.x, y: n.y })); G.fx.innerHTML = ''; drawRouteInto(G.fx, pts, '#b48cff', true, true); applyScales(); setTimeout(() => { G.fx.innerHTML = ''; }, 3500); toast('Previewing alternative for 3.5s'); });
+}
+function paneBuilder() {
+  const st = routeStats(ROUTE, oracleOpts.travel);
+  return `<div class="sec"><div class="spread"><h3>Route builder</h3><button class="btn sm ${mode === 'build' ? 'on' : ''}" id="bmode">${ico('pin')}${mode === 'build' ? 'Adding…' : 'Add on map'}</button></div>
+    <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Click the map to add waypoints — they snap to nearby locations. Reorder, optimise, then save to a slot.</p>
+    <div class="grid g3"><div class="kpi gold"><div class="k">Distance</div><div class="v" style="font-size:16px">${fmtM(st.d)}</div></div><div class="kpi"><div class="k">Est. time</div><div class="v" style="font-size:16px">${fmtS(st.total)}</div><div class="s">${fmtS(st.run)} moving</div></div><div class="kpi"><div class="k">Chests</div><div class="v" style="font-size:16px">${st.chests}</div><div class="s">${st.bosses} boss${st.bosses === 1 ? '' : 'es'}</div></div></div></div>
+    <div class="sec">${ROUTE.length ? ROUTE.map((p, i) => { const n = p.id && byId(p.id); const leg = i ? fmtM(dist(ROUTE[i - 1], p)) : 'start'; return `<div class="wp"><span class="n">${i + 1}</span><span class="wn"><b>${esc(n ? n.name : p.label || 'Waypoint')}</b><span>${gridRef(p.x, p.y)} · ${leg}${n && n.chests ? ' · ' + n.chests + (n.est ? '~' : '') + ' chests' : ''}</span></span><button class="icon-btn" data-wu="${i}" aria-label="Move up">${ico('up')}</button><button class="icon-btn" data-wd="${i}" aria-label="Move down">${ico('down')}</button><button class="icon-btn" data-wx="${i}" aria-label="Remove">${ico('x')}</button></div>`; }).join('') : '<div class="empty">No waypoints yet.</div>'}</div>
+    <div class="row"><button class="btn sm pri" id="bsave" ${ROUTE.length ? '' : 'disabled'}>${ico('save')}Save to slot</button><button class="btn sm" id="bopt" ${ROUTE.length > 3 ? '' : 'disabled'}>${ico('wand')}Optimise order</button><button class="btn sm ghost danger" id="bclear" ${ROUTE.length ? '' : 'disabled'}>${ico('trash')}Clear</button></div>`;
+}
+function panePins() {
+  const sel = selected && selected.kind === 'pin' ? PINS.find(p => p.id === selected.id) : null;
+  return `<div class="sec"><h3>Custom pins</h3><p class="muted" style="font-size:12.5px;margin:6px 0 10px">Tag chests, NPCs, mobility (launch pads, rifts), weapons or notes you find in-game. NPC pins appear under the <b>AI · NPC pins</b> layer.</p>
+    <div class="chips">${Object.entries(PIN_TYPES).map(([k, v]) => `<button class="chipb ${pinType === k ? 'on' : ''}" data-pt="${k}"><i style="background:${v.color}"></i>${v.label}</button>`).join('')}</div>
+    <button class="btn ${mode === 'pin' ? 'on' : 'pri'}" id="pmode" style="width:100%;margin-top:10px">${ico('pin')}${mode === 'pin' ? 'Placing — click map' : 'Place ' + PIN_TYPES[pinType].label + ' pins'}</button></div>
+    ${sel ? `<div class="sec card crest"><div class="eyebrow">Selected pin · ${gridRef(sel.x, sel.y)}</div><div class="field" style="margin-top:8px"><input class="inp" id="pname" value="${esc(sel.label)}" maxlength="40"></div><div class="row" style="margin-top:8px"><button class="btn sm" id="proute">${ico('route')}Add to route</button><button class="btn sm danger" id="pdel">${ico('trash')}Delete</button></div></div>` : ''}
+    <div class="sec">${PINS.length ? PINS.map(p => `<div class="wp" style="cursor:pointer" data-pselect="${p.id}"><span class="n" style="background:${(PIN_TYPES[p.type] || PIN_TYPES.note).color}"></span><span class="wn"><b>${esc(p.label)}</b><span>${(PIN_TYPES[p.type] || PIN_TYPES.note).label} · ${gridRef(p.x, p.y)}</span></span><button class="icon-btn" data-pdel="${p.id}" aria-label="Delete">${ico('x')}</button></div>`).join('') : '<div class="empty">No pins yet.</div>'}</div>
+    ${PINS.length ? `<button class="btn sm ghost danger" id="pclear">${ico('trash')}Remove all pins</button>` : ''}`;
+}
+function selectNode(id) {
+  selected = { kind: 'node', id }; setPane('info'); renderMarkers(); $('#panel').classList.remove('collapsed');
+}
+function bindPane(p) {
+  const b = $('#pbody');
+  $$('[data-go2]', b).forEach(x => x.onclick = () => go(x.dataset.go2));
+  $$('[data-sel]', b).forEach(x => x.onclick = () => { const n = byId(x.dataset.sel); selectNode(n.id); flyTo(n.x, n.y, 2.6); });
+  if (p === 'layers') {
+    $$('[data-layer]', b).forEach(x => x.onchange = () => { LAYERS[x.dataset.layer] = x.checked; store.set('layers', LAYERS); renderAll(); });
+    $('#lall').onclick = () => { for (const k in LAYERS) LAYERS[k] = true; store.set('layers', LAYERS); renderAll(); renderPane(); };
+    $('#lnone').onclick = () => { for (const k in LAYERS) LAYERS[k] = false; store.set('layers', LAYERS); renderAll(); renderPane(); };
+    $('#tcal').onclick = () => setMode(mode === 'calibrate' ? 'select' : 'calibrate');
+    const inp = $('#nsearch'), sr = $('#sres');
+    inp.oninput = () => {
+      const q = inp.value.trim().toLowerCase(); if (!q) { sr.classList.remove('on'); return; }
+      const gm = q.match(/^([a-j])\s*(10|[1-9])$/i);
+      let html = '';
+      if (gm) html += `<button data-grid="${gm[1].toUpperCase()}${gm[2]}"><b>Grid ${gm[1].toUpperCase()}${gm[2]}</b><span class="dim">Jump</span></button>`;
+      const hits = NODES.filter(n => n.name.toLowerCase().includes(q) || (n.boss && n.boss.name.toLowerCase().includes(q)) || (n.boss && n.boss.drop.toLowerCase().includes(q))).slice(0, 8);
+      html += hits.map(n => `<button data-hit="${n.id}"><span><b>${esc(n.name)}</b>${n.boss ? ` <span class="dim">· ${esc(n.boss.name)}</span>` : ''}</span><span class="dim mono">${gridRef(n.x, n.y)}</span></button>`).join('');
+      sr.innerHTML = html || '<button disabled><span class="dim">No matches</span></button>'; sr.classList.add('on');
+      $$('[data-hit]', sr).forEach(x => x.onclick = () => { const n = byId(x.dataset.hit); selectNode(n.id); flyTo(n.x, n.y, 2.8); });
+      $$('[data-grid]', sr).forEach(x => x.onclick = () => { const g = x.dataset.grid, cx = 'ABCDEFGHIJ'.indexOf(g[0]) * 100 + 50, cy = (parseInt(g.slice(1)) - 1) * 100 + 50; flyTo(cx, cy, 3); });
+    };
+  }
+  if (p === 'info' && selected && selected.kind === 'node') {
+    const n = byId(selected.id);
+    const a = s => b.querySelector(`[data-act=${s}]`);
+    a('droptgt').onclick = () => { DROP = { x: n.x, y: n.y, id: n.id }; store.set('drop', DROP); renderBus(); setPane('drop'); };
+    a('addroute').onclick = () => { ROUTE.push({ x: n.x, y: n.y, id: n.id, label: n.name }); saveRoute(); renderRoute(); renderMarkers(); toast(`${n.name} added to route (${ROUTE.length})`); };
+    a('oraclefrom').onclick = () => { oracleOpts.start = { id: n.id }; store.set('oracle', oracleOpts); setPane('oracle'); };
+  }
+  if (p === 'drop') {
+    $('#dbus').onclick = () => setMode(mode === 'bus' ? 'select' : 'bus');
+    $('#drand').onclick = randomBus;
+    if ($('#dclear')) $('#dclear').onclick = () => { BUS = null; store.del('bus'); stopLive(true); renderBus(); renderPane(); };
+    $('#dsel').onchange = e => { const n = byId(e.target.value); if (n) { DROP = { x: n.x, y: n.y, id: n.id }; store.set('drop', DROP); renderBus(); renderPane(); } };
+    $('#dpick').onclick = () => setMode(mode === 'droptarget' ? 'select' : 'droptarget');
+    if ($('#livebtn')) { renderLiveBtn(); $('#livebtn').onclick = () => { beep(440, .05); liveTimer ? stopLive() : startLive(); }; }
+    $$('[data-drop]', b).forEach(x => x.onclick = () => { const n = byId(x.dataset.drop); DROP = { x: n.x, y: n.y, id: n.id }; store.set('drop', DROP); renderBus(); renderPane(); });
+  }
+  if (p === 'oracle') {
+    $('#o-start').onchange = e => { oracleOpts.start = e.target.value ? { id: e.target.value } : null; store.set('oracle', oracleOpts); renderPane(); };
+    $('#o-pick').onclick = () => setMode(mode === 'oraclestart' ? 'select' : 'oraclestart');
+    $('#o-budget').oninput = e => { oracleOpts.budget = +e.target.value; $('#o-bv').textContent = fmtS(+e.target.value); store.set('oracle', oracleOpts); };
+    $$('#o-travel button').forEach(x => x.onclick = () => { oracleOpts.travel = x.dataset.v; store.set('oracle', oracleOpts); $$('#o-travel button').forEach(y => y.classList.toggle('on', y === x)); });
+    $$('[data-w]', b).forEach(x => x.oninput = () => { oracleOpts[x.dataset.w] = +x.value; $('#v-' + x.dataset.w).textContent = x.value; store.set('oracle', oracleOpts); });
+    $$('[data-ot]', b).forEach(x => x.onclick = () => { oracleOpts.types[x.dataset.ot] = !oracleOpts.types[x.dataset.ot]; x.classList.toggle('on'); store.set('oracle', oracleOpts); });
+    $('#o-zone').onchange = e => { oracleOpts.endZone = e.target.checked; store.set('oracle', oracleOpts); };
+    $('#oraclerun').onclick = oracleScan;
+    if (ORACLE_RES) { $('#oraclecon').textContent = `Last scan: ${ORACLE_RES.legs.length} stops, value ${fmt1(ORACLE_RES.val)}.`; renderOracleResult(); }
+  }
+  if (p === 'builder') {
+    $('#bmode').onclick = () => setMode(mode === 'build' ? 'select' : 'build');
+    $$('[data-wu]', b).forEach(x => x.onclick = () => { const i = +x.dataset.wu; if (i > 0) { [ROUTE[i - 1], ROUTE[i]] = [ROUTE[i], ROUTE[i - 1]]; saveRoute(); renderRoute(); renderPane(); } });
+    $$('[data-wd]', b).forEach(x => x.onclick = () => { const i = +x.dataset.wd; if (i < ROUTE.length - 1) { [ROUTE[i + 1], ROUTE[i]] = [ROUTE[i], ROUTE[i + 1]]; saveRoute(); renderRoute(); renderPane(); } });
+    $$('[data-wx]', b).forEach(x => x.onclick = () => { ROUTE.splice(+x.dataset.wx, 1); saveRoute(); renderRoute(); renderMarkers(); renderPane(); });
+    $('#bsave').onclick = () => slotPick(ROUTE, 'My route', 'manual');
+    $('#bopt').onclick = optimiseRoute;
+    $('#bclear').onclick = async () => { if (await ask('Clear route?', 'Removes all waypoints from the builder. Saved slots are not affected.', 'Clear', true)) { ROUTE = []; saveRoute(); renderAll(); renderPane(); } };
+  }
+  if (p === 'pins') {
+    $$('[data-pt]', b).forEach(x => x.onclick = () => { pinType = x.dataset.pt; if (mode === 'pin') setModeText(MODE_TXT.pin + ` (${PIN_TYPES[pinType].label})`); renderPane(); });
+    $('#pmode').onclick = () => setMode(mode === 'pin' ? 'select' : 'pin');
+    $$('[data-pselect]', b).forEach(x => x.onclick = e => { if (e.target.closest('[data-pdel]')) return; const pn = PINS.find(q => q.id === x.dataset.pselect); selected = { kind: 'pin', id: pn.id }; renderPins(); renderPane(); flyTo(pn.x, pn.y, 3); });
+    $$('[data-pdel]', b).forEach(x => x.onclick = () => { PINS = PINS.filter(q => q.id !== x.dataset.pdel); store.set('pins', PINS); renderPins(); renderPane(); });
+    if ($('#pname')) {
+      const pn = PINS.find(q => q.id === selected.id);
+      $('#pname').onchange = e => { pn.label = e.target.value.trim() || pn.label; store.set('pins', PINS); renderPins(); renderPane(); };
+      $('#pdel').onclick = () => { PINS = PINS.filter(q => q !== pn); selected = null; store.set('pins', PINS); renderPins(); renderPane(); };
+      $('#proute').onclick = () => { ROUTE.push({ x: pn.x, y: pn.y, label: pn.label }); saveRoute(); renderRoute(); toast('Pin added to route'); };
+    }
+    if ($('#pclear')) $('#pclear').onclick = async () => { if (await ask('Remove all pins?', `Deletes ${PINS.length} custom pins.`, 'Remove', true)) { PINS = []; store.set('pins', PINS); renderPins(); renderPane(); } };
+  }
+}
+
+/* -- enhancement rail -- */
+function renderEnh() {
+  const t = (id, i, tip, on) => `<button data-enh="${id}" class="${on ? 'on' : ''}" data-tip="${tip}" aria-label="${tip}" aria-pressed="${!!on}">${ico(i)}</button>`;
+  $('#enh').innerHTML = `<div class="enh-grp">${t('heat', 'heat', 'Contest heatmap', ENH.heat)}${t('loot', 'chest', 'Loot glow', ENH.loot)}${t('grid', 'grid', 'Grid', ENH.grid)}${t('labels', 'label', 'Labels', ENH.labels)}${t('nitemare', 'moon', 'Fortnitemares filter', ENH.nitemare)}${t('focus', 'focus', 'Focus route', ENH.focus)}</div>
+    <div class="enh-grp">${t('ruler', 'ruler', 'Measure distance', mode === 'ruler')}${t('zone', 'zone', 'Safe-zone planner', mode === 'zone')}${t('fit', 'fit', 'Reset view', false)}${t('full', 'full', 'Fullscreen', !!document.fullscreenElement)}</div>
+    ${mode === 'zone' && ZONE ? `<div class="enh-grp" style="padding:8px;width:170px;gap:6px"><span class="lbl">Zone radius · ${Math.round(ZONE.r * MPU())} m</span><input type="range" id="zr" min="40" max="420" value="${ZONE.r}"><button class="btn sm danger" id="zclr">Remove zone</button></div>` : ''}`;
+  $$('[data-enh]').forEach(b => b.onclick = () => {
+    const k = b.dataset.enh;
+    if (k === 'ruler' || k === 'zone') { setMode(mode === k ? 'select' : k); return; }
+    if (k === 'fit') { fit(); return; }
+    if (k === 'full') { const w = $('#app'); if (!document.fullscreenElement) (w.requestFullscreen ? w.requestFullscreen() : Promise.reject()).catch(() => toast('Fullscreen not available here')); else document.exitFullscreen(); setTimeout(renderEnh, 200); return; }
+    ENH[k] = !ENH[k]; store.set('enh', ENH); renderEnh(); renderAll();
+  });
+  const zr = $('#zr'); if (zr) { zr.oninput = () => { ZONE.r = +zr.value; renderZone(); zr.previousElementSibling.textContent = `Zone radius · ${Math.round(ZONE.r * MPU())} m`; }; zr.onchange = () => store.set('zone', ZONE); }
+  const zc = $('#zclr'); if (zc) zc.onclick = () => { ZONE = null; store.del('zone'); renderZone(); setMode('select'); };
+}
+$('#modecancel').onclick = () => setMode('select');
+
+/* -- background (official map image) via IndexedDB -- */
+const idb = {
+  open() { return new Promise((res, rej) => { try { const r = indexedDB.open('fdm', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); },
+  async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); } catch (e) { return null; } },
+  async set(k, v) { try { const db = await this.open(); await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; } catch (e) { return false; } },
+  async del(k) { try { const db = await this.open(); db.transaction('kv', 'readwrite').objectStore('kv').delete(k); } catch (e) {} }
+};
+let bgURL = null, bgOn = false;
+async function loadBg() { const blob = await idb.get('bg'); if (blob) { if (bgURL) URL.revokeObjectURL(bgURL); bgURL = URL.createObjectURL(blob); bgOn = true; } else { bgURL = null; bgOn = false; } updateBg(); }
+function updateBg() { if (!G.bgImg) return; if (bgOn && bgURL) { G.bgImg.setAttribute('href', bgURL); G.bgImg.style.display = ''; G.bgImg.setAttribute('opacity', S.bgOpacity); G.terrain.style.display = S.bgOpacity >= .99 ? 'none' : ''; G.terrain.setAttribute('opacity', 1); } else { G.bgImg.style.display = 'none'; G.terrain.style.display = ''; } world.insertBefore(G.bg, G.roads); }
+
+/* =====================================================================
+   HOME / ROUTES / SETTINGS / LOG views
+   ===================================================================== */
+const SEASON_END = new Date('2026-11-01T00:00:00Z');
+let homeTimer = 0;
+function renderHome() {
+  const pois = NODES.filter(n => n.type === 'poi');
+  const hot = pois.slice().sort((a, b) => b.ppg - a.ppg).slice(0, 5);
+  const eff = NODES.filter(n => n.type === 'poi').map(n => ({ n, e: n.chests / (n.ppg + .5) })).sort((a, b) => b.e - a.e).slice(0, 5);
+  const quiet = NODES.filter(n => n.type !== 'console' && n.chests >= 6).sort((a, b) => b.empty - a.empty).slice(0, 5);
+  const totalChests = NODES.reduce((s, n) => s + (n.type !== 'console' ? n.chests || 0 : 0), 0);
+  const filled = SLOTS.filter(Boolean).length;
+  $('#v-home').innerHTML = `<div class="page">
+    <div class="hero">
+      <div class="card crest hero-main">
+        <div class="eyebrow">Tactical Atlas · Battle Royale</div>
+        <h1 style="margin-top:6px">Command the island.</h1>
+        <p>Layered intel for Chapter 7 Season 4 “Override” with Fortnitemares 2026 — plan your drop to the second, let the Oracle solve your loot path, and keep your best routes on file.</p>
+        <div class="row"><button class="btn pri" data-open="layers">${ico('map')}Open map</button><button class="btn" data-open="drop">${ico('drop')}Drop calculator</button><button class="btn" data-open="oracle">${ico('oracle')}Oracle route AI</button></div>
+      </div>
+      <div class="card crest"><div class="spread"><h3>Season clock</h3><span class="tag gold">Override</span></div>
+        <div class="muted" style="font-size:12.5px;margin-top:6px">Chapter 7 Season 4 ends 1 Nov 2026 (Epic-confirmed date; exact hour TBC).</div>
+        <div class="count" id="count"></div>
+        <div class="grid g2" style="margin-top:12px"><div class="kpi"><div class="k">Locations mapped</div><div class="v">${NODES.length}</div><div class="s">${pois.length} named · ${NODES.filter(n => n.boss).length} bosses</div></div><div class="kpi gold"><div class="k">Chests charted</div><div class="v">${totalChests}</div><div class="s">${NODES.filter(n => n.est).length} entries estimated</div></div></div>
+      </div>
+    </div>
+    <div class="rule"><span>Operations</span></div>
+    <div class="grid g4">
+      <button class="tile" data-open="layers"><span class="ic">${ico('layers')}</span><b>Live map & layers</b><span>11 toggleable layers incl. AI bosses, chests, vaults and consoles.</span></button>
+      <button class="tile" data-open="drop"><span class="ic">${ico('bus')}</span><b>Drop calculator</b><span>Bus-path physics, jump window and a live countdown.</span></button>
+      <button class="tile" data-open="oracle"><span class="ic">${ico('oracle')}</span><b>Oracle route AI</b><span>Scans every destination and solves the best loot path.</span></button>
+      <button class="tile" data-go3="routes"><span class="ic">${ico('save')}</span><b>Saved routes</b><span>${filled}/6 slots in use · share codes & import.</span></button>
+    </div>
+    <div class="rule"><span>Drop intelligence</span></div>
+    <div class="grid g3">
+      <div class="card"><h3>Hottest drops</h3><table class="t" style="margin-top:8px"><tbody>${hot.map(n => `<tr class="click" data-fly="${n.id}"><td><b>${esc(n.name)}</b></td><td class="mono" style="text-align:right">${n.ppg.toFixed(2)}</td><td style="width:70px"><div class="bar red"><i style="width:${n.ppg / 5.6 * 100}%"></i></div></td></tr>`).join('')}</tbody></table><div class="dim" style="font-size:11.5px;margin-top:6px">Avg. players landing per game</div></div>
+      <div class="card"><h3>Loot per rival</h3><table class="t" style="margin-top:8px"><tbody>${eff.map(({ n, e }) => `<tr class="click" data-fly="${n.id}"><td><b>${esc(n.name)}</b>${n.est ? ' <span class="tag est">est</span>' : ''}</td><td class="mono" style="text-align:right">${fmt1(e)}</td><td style="width:70px"><div class="bar"><i style="width:${Math.min(100, e / 25 * 100)}%"></i></div></td></tr>`).join('')}</tbody></table><div class="dim" style="font-size:11.5px;margin-top:6px">Chests ÷ (landers + you)</div></div>
+      <div class="card"><h3>Quiet drops</h3><table class="t" style="margin-top:8px"><tbody>${quiet.map(n => `<tr class="click" data-fly="${n.id}"><td><b>${esc(n.name)}</b></td><td class="mono" style="text-align:right">${n.empty}%</td><td style="width:70px"><div class="bar"><i style="width:${n.empty}%"></i></div></td></tr>`).join('')}</tbody></table><div class="dim" style="font-size:11.5px;margin-top:6px">% of games nobody else lands</div></div>
+    </div>
+    <div class="rule"><span>Field notes</span></div>
+    <div class="grid g2">
+      <div class="card"><h3>Bosses & mythics</h3>${NODES.filter(n => n.boss).map(n => `<div class="boss" style="cursor:pointer" data-fly="${n.id}"><span style="color:var(--danger)">${ico('crown')}</span><div><b>${esc(n.boss.name)}</b> <span class="dim">· ${esc(n.name)}</span><div class="muted" style="font-size:12.5px">${esc(n.boss.drop)}</div></div></div>`).join('')}</div>
+      <div class="card stack"><h3>Data notes</h3>
+        <div class="notice"><b>Positions are approximate.</b> Import the official map image in Settings and use Calibrate mode to drag markers into place — your corrections are saved.</div>
+        <div class="muted" style="font-size:12.5px">Chest, ammo, vending and Reboot counts come from Fortnite Wiki figures where published; entries marked <span class="tag est">est</span> are estimates. Contest and air-time stats come from Elite Esports C7S4 landing data. Fortnitemares replaced The Battlewoods (Nightmare Neighborhood), Latte Landing (Freaky Fields) and the Arcade (Freddy Fazbear's Pizzeria) — those inherit their predecessor's contest stats. Edit any figure in Settings → Location data.</div>
+      </div>
+    </div>
+  </div>`;
+  $$('[data-open]', $('#v-home')).forEach(b => b.onclick = () => { go('map'); setPane(b.dataset.open); });
+  $$('[data-go3]', $('#v-home')).forEach(b => b.onclick = () => go(b.dataset.go3));
+  $$('[data-fly]', $('#v-home')).forEach(b => b.onclick = () => { go('map'); const n = byId(b.dataset.fly); selectNode(n.id); setTimeout(() => flyTo(n.x, n.y, 2.6), 50); });
+  const tick = () => {
+    const c = $('#count'); if (!c) return;
+    let s = Math.max(0, (SEASON_END - Date.now()) / 1000);
+    const d = Math.floor(s / 86400); s -= d * 86400; const h = Math.floor(s / 3600); s -= h * 3600; const m = Math.floor(s / 60); s = Math.floor(s - m * 60);
+    c.innerHTML = [[d, 'Days'], [h, 'Hrs'], [m, 'Min'], [s, 'Sec']].map(([v, l]) => `<div><b>${String(v).padStart(2, '0')}</b><span>${l}</span></div>`).join('');
+  };
+  clearInterval(homeTimer); tick(); homeTimer = setInterval(() => { if (curView === 'home') tick(); }, 1000);
+}
+
+function slotPreview(s) {
+  if (!s) return '';
+  const pts = s.pts; const path = routePath(pts);
+  return `<svg viewBox="0 0 1000 1000">${terrainURL ? `<image href="${terrainURL}" width="1000" height="1000" preserveAspectRatio="none"/>` : ''}<path d="${path}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="16" stroke-linejoin="round"/><path d="${path}" fill="none" stroke="${s.source === 'oracle' ? '#5fe0c8' : '#f1d68e'}" stroke-width="8" stroke-linejoin="round"/>${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="${i ? 14 : 20}" fill="${i ? '#f1d68e' : '#fff'}" stroke="#000" stroke-width="4"/>`).join('')}</svg>`;
+}
+function renderRoutes() {
+  $('#v-routes').innerHTML = `<div class="page"><div class="spread" style="flex-wrap:wrap"><div><div class="eyebrow">Route archive</div><h1 style="margin-top:4px">Saved routes</h1></div>
+    <div class="row"><button class="btn" id="rimport">${ico('ul')}Import share code</button><button class="btn pri" data-open="builder">${ico('route')}New route</button></div></div>
+    <p class="muted" style="margin:8px 0 18px">Six persistent slots. Build routes by hand in the Builder or let the Oracle generate them, then load, rename, duplicate or share.</p>
+    <div class="grid g3">${SLOTS.map((s, i) => s ? `<div class="card crest slot"><div class="pv">${slotPreview(s)}<span class="badge tag ${s.source === 'oracle' ? 'arc' : 'gold'}">${s.source === 'oracle' ? 'Oracle' : s.source === 'import' ? 'Imported' : 'Manual'}</span></div>
+      <div class="spread"><div style="min-width:0"><div class="eyebrow">Slot ${i + 1}</div><b style="font-size:15px">${esc(s.name)}</b></div></div>
+      <div class="dim" style="font-size:12px">${s.pts.length} stops · ${fmtM(routeStats(s.pts).d)} · ${routeStats(s.pts).chests} chests · ${new Date(s.t).toLocaleDateString()}</div>
+      <div class="row"><button class="btn sm pri" data-load="${i}">${ico('map')}Load</button><button class="btn sm" data-ren="${i}">${ico('edit')}Rename</button><button class="btn sm" data-dup="${i}">${ico('copy')}Duplicate</button><button class="btn sm" data-share="${i}">${ico('dl')}Share</button><button class="btn sm ghost danger" data-del="${i}">${ico('trash')}</button></div></div>`
+    : `<div class="card slot emptyslot"><div class="pv"><span>Empty</span></div><div><div class="eyebrow">Slot ${i + 1}</div><b class="dim">Available</b></div><div class="row"><button class="btn sm" data-open="builder">${ico('route')}Build</button><button class="btn sm" data-open="oracle">${ico('oracle')}Oracle</button></div></div>`).join('')}</div></div>`;
+  const v = $('#v-routes');
+  $$('[data-open]', v).forEach(b => b.onclick = () => { go('map'); setPane(b.dataset.open); });
+  $$('[data-load]', v).forEach(b => b.onclick = () => loadSlot(+b.dataset.load));
+  $$('[data-ren]', v).forEach(b => b.onclick = async () => { const i = +b.dataset.ren, n = await promptText('Rename route', 'Name', SLOTS[i].name); if (n) { SLOTS[i].name = n; store.set('slots', SLOTS); renderRoutes(); } });
+  $$('[data-dup]', v).forEach(b => b.onclick = () => { const i = +b.dataset.dup, j = SLOTS.findIndex(s => !s); if (j < 0) { toast('No empty slot — clear one first'); return; } SLOTS[j] = JSON.parse(JSON.stringify(SLOTS[i])); SLOTS[j].name += ' (copy)'; SLOTS[j].t = Date.now(); store.set('slots', SLOTS); renderRoutes(); toast(`Duplicated to slot ${j + 1}`); });
+  $$('[data-del]', v).forEach(b => b.onclick = async () => { const i = +b.dataset.del; if (await ask('Delete route?', `“${SLOTS[i].name}” in slot ${i + 1} will be removed.`, 'Delete', true)) { SLOTS[i] = null; store.set('slots', SLOTS); renderRoutes(); } });
+  $$('[data-share]', v).forEach(b => b.onclick = () => { const code = encodeRoute(SLOTS[+b.dataset.share]); modal(`<h2>Share code</h2><p>Anyone with Fortnite Dynamic Map can import this.</p><textarea class="inp mono" rows="5" readonly style="font-size:11px;word-break:break-all">${esc(code)}</textarea><div class="acts"><button class="btn ghost" data-a="c">Close</button><button class="btn pri" data-a="cp">${ico('copy')}Copy</button></div>`, (box, close) => { box.querySelector('[data-a=c]').onclick = close; box.querySelector('[data-a=cp]').onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('Copied'), () => { box.querySelector('textarea').select(); toast('Select & copy manually'); }); }; }); });
+  $('#rimport').onclick = () => modal(`<h2>Import route</h2><p>Paste a share code.</p><textarea class="inp mono" id="imc" rows="5" style="font-size:11px"></textarea><div class="acts"><button class="btn ghost" data-a="c">Cancel</button><button class="btn pri" data-a="i">Import</button></div>`, (box, close) => {
+    box.querySelector('[data-a=c]').onclick = close;
+    box.querySelector('[data-a=i]').onclick = () => { try { const r = decodeRoute(box.querySelector('#imc').value); const j = SLOTS.findIndex(s => !s); if (j < 0) { toast('No empty slot — clear one first'); return; } SLOTS[j] = r; store.set('slots', SLOTS); close(); renderRoutes(); toast(`Imported to slot ${j + 1}`); } catch (e) { toast('Invalid share code'); } };
+  });
+}
+
+const THEMES = [['boardroom', 'Boardroom', ['#0c1117', '#141c26', '#d3ad58', '#53b8c6']], ['parchment', 'Parchment', ['#efe9dc', '#fbf8f1', '#946519', '#2c6d78']], ['arcane', 'Arcane', ['#0f0c1a', '#19142c', '#c9a8ff', '#5fd6c6']], ['nitemare', 'Nitemare', ['#120c09', '#1d140f', '#ff8f2e', '#a771ff']]];
+const PHYS = [
+  ['mapSize', 'Island width (m)', 1500, 4000, 50, 'Real-world width of the map square.'],
+  ['busSpeed', 'Battle Bus speed (m/s)', 10, 60, 1, ''],
+  ['baseDescent', 'Straight-down descent (s)', 8, 40, 1, 'Time from jump to landing with no horizontal travel.'],
+  ['glideSpeed', 'Horizontal air speed (m/s)', 8, 40, 1, 'Average horizontal speed while diving + gliding.'],
+  ['maxReach', 'Max horizontal reach (m)', 300, 2000, 25, 'Furthest you can travel from the bus line.'],
+  ['footSpeed', 'Sprint speed (m/s)', 3, 12, .5, ''],
+  ['vehSpeed', 'Vehicle speed (m/s)', 10, 45, 1, ''],
+  ['secPerChest', 'Seconds per chest', 2, 20, 1, 'Open + pick-up + move to next.'],
+  ['dwellPOI', 'Loot time at named location (s)', 10, 180, 5, 'Upper bound per Oracle stop.'],
+  ['dwellLM', 'Loot time at landmark (s)', 5, 120, 5, ''],
+  ['bossTime', 'Boss fight time (s)', 0, 120, 5, 'Added when mythic priority ≥ 4.'],
+  ['budget', 'Default Oracle budget (s)', 60, 600, 15, ''],
+];
+function renderSettings() {
+  $('#v-settings').innerHTML = `<div class="page"><div class="eyebrow">Configuration</div><h1 style="margin:4px 0 18px">Settings</h1>
+    <div class="card crest"><h3>Theme</h3><div class="themes" style="margin-top:10px">${THEMES.map(([id, n, c]) => `<button class="theme-card ${S.theme === id ? 'on' : ''}" data-theme-set="${id}"><span class="sw4">${c.map(x => `<i style="background:${x}"></i>`).join('')}</span><b>${n}</b></button>`).join('')}</div></div>
+    <div class="rule"><span>Map</span></div>
+    <div class="grid g2">
+      <div class="card stack"><h3>Official map image</h3><p class="muted" style="font-size:12.5px;margin:0">Load a square screenshot of the in-game or fortnite.gg map. It's stored on this device only. Then use <b>Calibrate</b> on the Layers tab to drag markers into exact position.</p>
+        <div class="row"><label class="btn pri">${ico('ul')}Choose image<input type="file" accept="image/*" id="bgfile" hidden></label>${bgOn ? `<button class="btn danger" id="bgclr">${ico('trash')}Remove</button>` : ''}</div>
+        <div class="field"><label>Image opacity · <span id="bgov">${Math.round(S.bgOpacity * 100)}%</span></label><input type="range" id="bgop" min="0.2" max="1" step="0.05" value="${S.bgOpacity}"></div>
+        <div class="row"><button class="btn sm" id="calgo">${ico('move')}Open Calibrate mode</button><button class="btn sm ghost danger" id="posreset">Reset all positions</button></div></div>
+      <div class="card stack"><h3>Display & feedback</h3>
+        <div class="field"><label>Marker size · <span id="msv">${S.markerScale.toFixed(2)}×</span></label><input type="range" id="ms" min="0.6" max="1.8" step="0.05" value="${S.markerScale}"></div>
+        <div class="lrow"><span class="lt"><b>Sound cues</b><span>Jump countdown beeps</span></span><label class="sw"><input type="checkbox" id="snd" ${S.sound ? 'checked' : ''}><i></i></label></div>
+        <div class="lrow"><span class="lt"><b>Haptics</b><span>Vibrate on jump (supported phones)</span></span><label class="sw"><input type="checkbox" id="hap" ${S.haptics ? 'checked' : ''}><i></i></label></div></div>
+    </div>
+    <div class="rule"><span>Physics & timings</span></div>
+    <div class="card"><p class="muted" style="font-size:12.5px;margin:0 0 12px">Defaults are calibrated against median real-world air times (≈21 s at the centre, ≈55 s at the far coast). Tune them to your own testing.</p>
+      <div class="grid g3">${PHYS.map(([k, l, mn, mx, st, h]) => `<div class="field"><label>${l}</label><input class="inp mono" type="number" data-phys="${k}" min="${mn}" max="${mx}" step="${st}" value="${S[k]}">${h ? `<span class="dim" style="font-size:11.5px">${h}</span>` : ''}</div>`).join('')}</div>
+      <div class="row" style="margin-top:12px"><button class="btn sm ghost" id="physreset">Restore defaults</button></div></div>
+    <div class="rule"><span>Location data</span></div>
+    <div class="card"><p class="muted" style="font-size:12.5px;margin:0 0 10px">Edit any figure — changes apply everywhere instantly and persist. Clearing the “est.” box marks a count as verified.</p>
+      <div class="datatable"><table class="t"><thead><tr><th>Location</th><th>Type</th><th>Chests</th><th>est.</th><th>Players/game</th><th>Empty %</th><th>Grid</th></tr></thead><tbody>
+      ${NODES.map(n => `<tr><td><b>${esc(n.name)}</b></td><td class="dim">${TYPE_LABEL[n.type]}</td><td><input type="number" min="0" max="200" data-ed="${n.id}" data-f="chests" value="${n.chests}"></td><td><input type="checkbox" data-ed="${n.id}" data-f="est" ${n.est ? 'checked' : ''} style="width:auto"></td><td><input type="number" step="0.01" min="0" max="20" data-ed="${n.id}" data-f="ppg" value="${n.ppg}"></td><td><input type="number" min="0" max="100" data-ed="${n.id}" data-f="empty" value="${n.empty}"></td><td class="mono dim">${gridRef(n.x, n.y)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="row" style="margin-top:10px"><button class="btn sm ghost danger" id="datareset">Reset data to defaults</button></div></div>
+    <div class="rule"><span>Backup</span></div>
+    <div class="card"><div class="row"><button class="btn" id="exp">${ico('dl')}Export everything</button><label class="btn">${ico('ul')}Import backup<input type="file" accept="application/json,.json" id="impf" hidden></label><button class="btn danger" id="wipe">${ico('trash')}Erase all data</button></div>
+      <p class="dim" style="font-size:12px;margin:10px 0 0">Exports settings, layers, slots, pins, the working route and calibrated positions as JSON. The map image stays on-device.</p></div>
+    <p class="dim" style="font-size:12px;text-align:center;margin-top:24px">Fortnite Dynamic Map v${APP_VERSION} · fan-made tool, not affiliated with Epic Games.</p>
+  </div>`;
+  const v = $('#v-settings');
+  $$('[data-theme-set]', v).forEach(b => b.onclick = () => { setTheme(b.dataset.themeSet); renderSettings(); });
+  $('#bgfile').onchange = async e => { const f = e.target.files[0]; if (!f) return; if (f.size > 15e6) { toast('Image too large (max 15 MB)'); return; } const ok = await idb.set('bg', f); if (!ok) { toast('Could not store image on this device'); return; } await loadBg(); renderSettings(); toast('Map image loaded'); };
+  if ($('#bgclr')) $('#bgclr').onclick = async () => { await idb.del('bg'); bgOn = false; bgURL = null; updateBg(); renderSettings(); };
+  $('#bgop').oninput = e => { S.bgOpacity = +e.target.value; $('#bgov').textContent = Math.round(S.bgOpacity * 100) + '%'; saveSettings(); updateBg(); };
+  $('#calgo').onclick = () => { go('map'); setPane('layers'); setMode('calibrate'); };
+  $('#posreset').onclick = async () => { if (await ask('Reset positions?', 'All calibrated marker positions return to defaults.', 'Reset', true)) { const ov = store.get('nodeOv', {}); for (const k in ov) { delete ov[k].x; delete ov[k].y; } store.set('nodeOv', ov); buildNodes(); await renderTerrain(true); renderAll(); renderSettings(); toast('Positions reset'); } };
+  $('#ms').oninput = e => { S.markerScale = +e.target.value; $('#msv').textContent = S.markerScale.toFixed(2) + '×'; saveSettings(); };
+  $('#snd').onchange = e => { S.sound = e.target.checked; saveSettings(); };
+  $('#hap').onchange = e => { S.haptics = e.target.checked; saveSettings(); };
+  $$('[data-phys]', v).forEach(i => i.onchange = () => { const k = i.dataset.phys, def = PHYS.find(p => p[0] === k); let val = parseFloat(i.value); if (!isFinite(val)) val = DEF_SETTINGS[k]; val = clamp(val, def[2], def[3]); i.value = val; S[k] = val; saveSettings(); renderBus(); });
+  $('#physreset').onclick = () => { PHYS.forEach(([k]) => S[k] = DEF_SETTINGS[k]); saveSettings(); renderSettings(); toast('Physics restored'); };
+  $$('[data-ed]', v).forEach(i => i.onchange = () => { const n = byId(i.dataset.ed), f = i.dataset.f; let val = f === 'est' ? i.checked : parseFloat(i.value); if (f !== 'est' && !isFinite(val)) return; n[f] = val; saveNodeOv(n.id, { [f]: val }); });
+  $('#datareset').onclick = async () => { if (await ask('Reset location data?', 'Chest counts and contest stats return to defaults. Positions are kept.', 'Reset', true)) { const ov = store.get('nodeOv', {}); for (const k in ov) ov[k] = ov[k].x != null ? { x: ov[k].x, y: ov[k].y } : {}; store.set('nodeOv', ov); buildNodes(); renderAll(); renderSettings(); } };
+  $('#exp').onclick = () => {
+    const data = { app: 'fortnite-dynamic-map', v: APP_VERSION, t: Date.now(), settings: S, layers: LAYERS, enh: ENH, slots: SLOTS, pins: PINS, route: ROUTE, bus: BUS, zone: ZONE, drop: DROP, oracle: oracleOpts, nodeOv: store.get('nodeOv', {}) };
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' })); a.download = `fortnite-dynamic-map-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $('#impf').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const d = JSON.parse(await f.text()); if (d.app !== 'fortnite-dynamic-map') throw 0;
+      const map = { settings: 'settings', layers: 'layers', enh: 'enh', slots: 'slots', pins: 'pins', route: 'route', bus: 'bus', zone: 'zone', drop: 'drop', oracle: 'oracle', nodeOv: 'nodeOv' };
+      for (const k in map) if (d[k] !== undefined) store.set(map[k], d[k]);
+      toast('Backup imported — reloading'); setTimeout(() => location.reload(), 700);
+    } catch (err) { toast('Not a valid Fortnite Dynamic Map backup'); }
+  };
+  $('#wipe').onclick = async () => { if (await ask('Erase all data?', 'Removes every saved route, pin, calibration and setting on this device. This cannot be undone.', 'Erase everything', true)) { Object.keys(localStorage).filter(k => k.startsWith(LS)).forEach(k => localStorage.removeItem(k)); await idb.del('bg'); location.reload(); } };
+}
+function renderLog() {
+  $('#v-log').innerHTML = `<div class="page"><div class="eyebrow">Release history</div><h1 style="margin:4px 0 8px">Update log</h1><p class="muted">Every change to Fortnite Dynamic Map, newest first.</p>
+    <div class="card" style="margin-top:16px;padding:4px 18px">${CHANGELOG.map(c => `<div class="log-entry"><div><div class="ver">v${c.v}</div><div class="dim" style="font-size:12px">${c.d}</div></div><div><b>${c.v === APP_VERSION ? 'Current release' : 'Release'}</b><ul>${c.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div></div>`).join('')}</div>
+    <div class="rule"><span>Sources</span></div>
+    <div class="card muted" style="font-size:13px"><ul style="margin:0;padding-left:18px">
+      <li>Fortnite Wiki POI chest/ammo/vending/Reboot counts (via gamertagmythras.com C7S4 map guide)</li>
+      <li>Elite Esports — Override map landing data: players/game, uncontested %, median air time</li>
+      <li>fortnite.com — “The Corruption Spreads in Fortnitemares 2026” (1 Oct 2026)</li>
+      <li>timesaver.gg — Fortnitemares 2026 map changes; digitaltq.com — C7S4 POIs & bosses</li>
+      <li>ggseason.com — season end date (1 Nov 2026)</li></ul></div></div>`;
+}
+
+/* =====================================================================
+   NAV + BOOT
+   ===================================================================== */
+function setTheme(t) { S.theme = t; saveSettings(); document.documentElement.dataset.theme = t; const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); }
+let mapBooted = false;
+async function go(v) {
+  curView = v; store.set('view', v);
+  $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  $$('.nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === v));
+  if (v !== 'map' && mode !== 'select') setMode('select');
+  if (v === 'home') renderHome();
+  if (v === 'routes') renderRoutes();
+  if (v === 'settings') renderSettings();
+  if (v === 'log') renderLog();
+  if (v === 'map') {
+    if (!mapBooted) { mapBooted = true; renderTabs(); renderPane(); renderEnh(); requestAnimationFrame(() => { fit(); renderAll(); renderTerrain(); }); }
+    else requestAnimationFrame(() => { fitKOnly(); applyView(); });
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,textarea,select')) return;
+  if (e.key === 'Escape') { if ($('#modal').classList.contains('on')) { $('#modal').classList.remove('on'); return; } setMode('select'); }
+  if (curView !== 'map') return;
+  if (e.key === '+' || e.key === '=') zoomAt(1.4, svg.clientWidth / 2, svg.clientHeight / 2);
+  if (e.key === '-') zoomAt(1 / 1.4, svg.clientWidth / 2, svg.clientHeight / 2);
+  if (e.key === '0') fit();
+  if (e.key.toLowerCase() === 'm') setMode(mode === 'ruler' ? 'select' : 'ruler');
+});
+$$('.nav [data-go], .brand').forEach(b => b.onclick = () => go(b.dataset.go));
+
+buildNodes();
+setTheme(S.theme);
+initSVG();
+initPointer();
+loadBg();
+go(store.get('view', 'home'));
+if (curView !== 'map') { // pre-render terrain so slot previews have it
+  setTimeout(() => { if (!terrainURL) genTerrain().then(u => { G.terrainImg.setAttribute('href', u); if (curView === 'routes') renderRoutes(); }); }, 400);
+}
+
+</script>
+</body>
+</html>
