@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#202225">
 <meta name="description" content="Fortnite Dynamic Map — interactive Chapter 7 Season 4 map with the official island, exact locations, spawn filters, drop calculator, loot-route AI and saved routes.">
 <title>Fortnite Dynamic Map</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E %3Cdefs%3E %3ClinearGradient id='fdmBadge' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='#ffe45c'/%3E%3Cstop offset='1' stop-color='#ffb300'/%3E%3C/linearGradient%3E %3ClinearGradient id='fdmSea' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='#1a5fd0'/%3E%3Cstop offset='1' stop-color='#0e3f8f'/%3E%3C/linearGradient%3E %3C/defs%3E %3Cpath d='M10 4h44a6 6 0 0 1 6 6v30c0 8-5 13-13 17L32 62 17 57C9 53 4 48 4 40V10a6 6 0 0 1 6-6z' fill='url(#fdmBadge)' stroke='#000' stroke-width='3.5' stroke-linejoin='round'/%3E %3Cpath d='M12 17l11-4 11 4 11-4 7 2.5v26L45 39l-11 4-11-4-11 4z' fill='url(#fdmSea)' stroke='#000' stroke-width='2.6' stroke-linejoin='round'/%3E %3Cpath d='M23 13v26M34 17v26M45 13v26' stroke='#000' stroke-width='1.6' opacity='.55'/%3E %3Cpath d='M15 30c3-6 9-9 12-6s1 8 6 9 9-6 11-11' fill='none' stroke='#000' stroke-width='5' stroke-linecap='round'/%3E %3Cpath d='M15 30c3-6 9-9 12-6s1 8 6 9 9-6 11-11' fill='none' stroke='#ffd60a' stroke-width='2.6' stroke-linecap='round' stroke-dasharray='3.2 2.6'/%3E %3Cpath d='M45 6a8 8 0 0 1 8 8c0 6-8 13-8 13s-8-7-8-13a8 8 0 0 1 8-8z' fill='#fff' stroke='#000' stroke-width='2.8' stroke-linejoin='round'/%3E %3Ccircle cx='45' cy='14' r='3.2' fill='#ffb300' stroke='#000' stroke-width='2'/%3E %3Ccircle cx='15' cy='30' r='3.2' fill='#fff' stroke='#000' stroke-width='2'/%3E %3C/svg%3E">
 <style>
 :root{
   --font:"Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -30,7 +31,11 @@ a{color:var(--arc)}
 /* ---------- header ---------- */
 .topbar{flex:0 0 auto;height:48px;display:flex;align-items:center;gap:12px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);z-index:40;position:relative}
 .brand{display:flex;align-items:center;gap:9px;background:none;border:0;padding:0;color:var(--text);min-width:0}
-.brand-name{font-family:var(--disp);font-weight:800;font-size:21px;font-stretch:condensed;white-space:nowrap;letter-spacing:.005em}
+.brand-name{font-family:var(--disp);font-weight:900;font-size:22px;line-height:.92;font-stretch:condensed;white-space:nowrap;text-transform:uppercase;display:flex;flex-direction:column;text-align:left}
+.brand-name small{font-size:10.5px;letter-spacing:.32em;color:var(--muted);font-weight:800}
+.ricon{display:inline-grid;place-items:center;flex:0 0 auto}
+.ricon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.hero-logo{width:72px;height:72px;margin-bottom:8px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
 .brand-name b{color:var(--gold)}
 .nav{display:flex;gap:2px;margin-left:auto;height:100%}
 .nav button{background:none;border:0;padding:0 12px;color:var(--text);font-family:var(--disp);font-weight:800;font-size:15px;text-transform:uppercase;font-stretch:condensed;letter-spacing:.02em;position:relative;opacity:.82;display:flex;align-items:center;gap:6px}
@@ -320,7 +325,7 @@ svg[data-z="0"] .zlm2,svg[data-z="1"] .zlm2{display:none}
 }
 @media (max-width:560px){
   .topbar{padding:0 8px;gap:6px}
-  .brand-name{font-size:17px}
+  .brand-name{font-size:18px}
   .g2,.g3{grid-template-columns:1fr}
   .themes{grid-template-columns:repeat(2,minmax(0,1fr))}
   .page{padding:16px 12px 32px}
@@ -341,9 +346,22 @@ svg[data-z="0"] .zlm2,svg[data-z="1"] .zlm2{display:none}
 <body>
 <div id="app">
   <header class="topbar">
-    <button class="brand" data-go="home" aria-label="Home">
-      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="var(--gold)" stroke="#000" stroke-width="2"/><path d="M15 5l3 8-3 2-3-2z" fill="#000"/><path d="M15 25l-3-8 3-2 3 2z" fill="#000" opacity=".55"/><circle cx="15" cy="15" r="2" fill="var(--gold)" stroke="#000" stroke-width="1.5"/></svg>
-      <span class="brand-name">Fortnite <b>Dynamic Map</b></span>
+    <button class="brand" data-go="home" aria-label="Fortnite Dynamic Map home">
+      <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true">
+  <defs>
+    <linearGradient id="fdmBadge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset="1" stop-color="#ffb300"/></linearGradient>
+    <linearGradient id="fdmSea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a5fd0"/><stop offset="1" stop-color="#0e3f8f"/></linearGradient>
+  </defs>
+  <path d="M10 4h44a6 6 0 0 1 6 6v30c0 8-5 13-13 17L32 62 17 57C9 53 4 48 4 40V10a6 6 0 0 1 6-6z" fill="url(#fdmBadge)" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M12 17l11-4 11 4 11-4 7 2.5v26L45 39l-11 4-11-4-11 4z" fill="url(#fdmSea)" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M23 13v26M34 17v26M45 13v26" stroke="#000" stroke-width="1.6" opacity=".55"/>
+  <path d="M15 30c3-6 9-9 12-6s1 8 6 9 9-6 11-11" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+  <path d="M15 30c3-6 9-9 12-6s1 8 6 9 9-6 11-11" fill="none" stroke="#ffd60a" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3.2 2.6"/>
+  <path d="M45 6a8 8 0 0 1 8 8c0 6-8 13-8 13s-8-7-8-13a8 8 0 0 1 8-8z" fill="#fff" stroke="#000" stroke-width="2.8" stroke-linejoin="round"/>
+  <circle cx="45" cy="14" r="3.2" fill="#ffb300" stroke="#000" stroke-width="2"/>
+  <circle cx="15" cy="30" r="3.2" fill="#fff" stroke="#000" stroke-width="2"/>
+</svg>
+      <span class="brand-name"><small>Fortnite</small>Dynamic <b>Map</b></span>
     </button>
     <nav class="nav" aria-label="Primary">
       <button data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></button>
@@ -390,7 +408,7 @@ svg[data-z="0"] .zlm2,svg[data-z="1"] .zlm2{display:none}
    World→map: px2048 = world * K + C  (calibrated against the official
    labelled render). Internal map space is 0..1000 on both axes.
    ===================================================================== */
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 const LS = 'fdm.v2.';
 const API_URL = 'https://fortnite-api.com/v1/map';
 const DEFAULT_IMG = 'https://fortnite-api.com/images/map.png';
@@ -500,6 +518,23 @@ const TYPES = {
 const SPAWN_ORDER = ['vault', 'pumpkin', 'chest', 'rarechest', 'ammo', 'vending', 'mending', 'cheat', 'extract', 'boost', 'launch', 'car', 'boat', 'zipline', 'teleport', 'service', 'campfire', 'slurp', 'fishing', 'reboot', 'jobboard', 'safe', 'register', 'note'];
 const iconSVG = (type, s = 30) => { const t = TYPES[type] || TYPES.note; return `<svg viewBox="-14 -14 28 28" width="${s}" height="${s}"><rect x="-12" y="-12" width="24" height="24" rx="6" fill="${t.color}" stroke="#000" stroke-width="2.2"/><g transform="translate(-8.4,-8.4) scale(.7)" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${GLYPH[type] || GLYPH.note}</g></svg>`; };
 
+const WIKI = 'https://static.wikia.nocookie.net/fortnite/images/';
+// Real Fortnite icons/renders (Epic Games art via the Fortnite Wiki). Loaded at 64px; glyph fallback if unreachable.
+const ICON_PATH = {
+  pumpkin: '6/66/Pumpkin_Chest_-_Container_-_Fortnite.png', chest: 'a/aa/Chest_%28v23.00%29_-_Container_-_Fortnite.png', rarechest: 'd/db/Rare_Chest_%28v23.00%29_-_Container_-_Fortnite.png',
+  ammo: '5/50/Ammo_Box_%28v23.00%29_-_Container_-_Fortnite.png', vending: 'a/a5/Vending_Machine_%28Better%29_-_Fortnite.png', mending: 'e/e5/Mending_Machine_-_Accolade_-_Fortnite.png',
+  cheat: 'a/a7/Console_-_Icon_-_Fortnite.png', extract: '0/0a/Extraction_Site_Booster_-_Item_-_Fortnite.png', boost: '4/49/Boost_Pad_-_Schematic_-_Save_the_World.png',
+  launch: 'c/cc/Launch_Pad_-_Trap_-_Fortnite.png', car: 'a/a1/Victory_Motors_Whiplash_-_Vehicle_-_Fortnite.png', boat: 'e/e1/Motorboat_-_Vehicle_-_Fortnite.png',
+  zipline: '0/0e/Fortnite_-_Zipline_Icon.png', teleport: 'c/c7/Teleporter_-_Icon_-_Fortnite.png', service: 'f/f7/Gas_Can_-_Item_-_Fortnite.png',
+  campfire: '4/41/Cozy_Campfire_-_Trap_-_Fortnite.png', slurp: '5/51/Slurp_Barrel_-_Prop_-_Fortnite.png', fishing: '9/9d/Fishing_Rod_-_Weapon_-_Fortnite.png',
+  reboot: '8/89/Reboot_Van_-_Prop_-_Fortnite.png', jobboard: '3/3a/Job_Board_%28Map_Icon%29_-_Object_-_Fortnite.png', safe: 'b/be/Safe_%28v34.00%29_-_Container_-_Fortnite.png',
+  register: 'd/d5/Cash_Register_%28New%29_-_Container_-_Fortnite.png', vault: 'a/a6/Vault_-_Icon_-_Fortnite.png', npc: 'd/da/Character_%28Map_Icon%29_-_Icon_-_Fortnite.png',
+  boss: 'd/d6/AI_Boss_-_Icon_-_Fortnite.png', console: 'a/a7/Console_-_Icon_-_Fortnite.png'
+};
+const iconURL = t => ICON_PATH[t] ? WIKI + ICON_PATH[t] + '/revision/latest/scale-to-width-down/64' : null;
+const ICON_FAIL = new Set();
+window.__iconFail = (t, img, s) => { ICON_FAIL.add(t); img.parentNode.innerHTML = iconSVG(t, s); };
+const iconHTML = (t, s = 30) => iconURL(t) && !ICON_FAIL.has(t) ? `<span class="ricon" style="width:${s}px;height:${s}px"><img src="${iconURL(t)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="__iconFail('${t}',this,${s})"></span>` : iconSVG(t, s);
 /* =====================================================================
    DATA
    ===================================================================== */
@@ -577,6 +612,7 @@ const DEF_VIS = Object.assign({ poi: true, lm: true, isle: true, console: true, 
 const DEF_SEC = { loc: true, ai: true, spawns: true };
 const DEF_ENH = { heat: false, loot: false, grid: false, labels: true, nitemare: false, focus: false };
 const CHANGELOG = [
+  { v: '2.1.0', d: '25 Oct 2026', items: ['Real Fortnite icons for every category — chests, rare chests, pumpkin chests, ammo boxes, vending, safes, cash registers, launch pads, Reboot Van, Whiplash, motorboat and more (Epic art via the Fortnite Wiki), with black outlines like the in-game map; built-in glyphs as offline fallback.', 'New app logo: map-shield badge with route and drop pin; used in the header, home screen and browser tab.'] },
   { v: '2.0.0', d: '25 Oct 2026', items: [
     'Rebuilt to match the fortnite.gg interactive map: filter sidebar with master toggles, per-category switches and counts, outlined icon markers with count badges, heavy map labels, yellow arrowed routes.',
     'Official Battle Royale map image and exact in-game coordinates for every named location, landmark, island and Override Console, pulled live from fortnite-api.com and cached for offline use (auto-updates next season).',
@@ -668,6 +704,7 @@ function initSVG() {
   const defs = el('defs', null, svg);
   defs.innerHTML = `<radialGradient id="heatG"><stop offset="0" stop-color="#ff2d20" stop-opacity=".8"/><stop offset=".45" stop-color="#ff8a00" stop-opacity=".42"/><stop offset="1" stop-color="#ffd000" stop-opacity="0"/></radialGradient>
     <radialGradient id="lootG"><stop offset="0" stop-color="#fff2a8" stop-opacity=".9"/><stop offset=".5" stop-color="#ffd60a" stop-opacity=".38"/><stop offset="1" stop-color="#ffd60a" stop-opacity="0"/></radialGradient>
+    <filter id="iol" x="-20%" y="-20%" width="140%" height="140%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.3" result="d"/><feFlood flood-color="#000"/><feComposite in2="d" operator="in" result="o"/><feDropShadow in="o" dx="0" dy="1.5" stdDeviation="1" flood-opacity=".5" result="os"/><feMerge><feMergeNode in="os"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <radialGradient id="nmG" cx="50%" cy="50%" r="70%"><stop offset=".35" stop-color="#2a0b3d" stop-opacity="0"/><stop offset="1" stop-color="#1a0626" stop-opacity=".7"/></radialGradient>`;
   world = el('g', { id: 'world' }, svg);
   ['base', 'grid', 'heat', 'loot', 'zone', 'bus', 'route', 'oracle', 'spawns', 'markers', 'labels', 'ruler', 'fx'].forEach(k => G[k] = el('g', { id: 'l-' + k }, world));
@@ -691,12 +728,19 @@ function applyScales() {
   scaleEls = scaleEls.filter(s => s.g.isConnected);
   for (const s of scaleEls) s.g.setAttribute('transform', `translate(${s.x},${s.y}) scale(${inv * s.mul})`);
 }
-function markerIcon(g, type, size = 1) {
+function glyphTile(w, type) {
   const t = TYPES[type] || TYPES.note;
-  const w = el('g', { transform: `scale(${size})` }, g);
   el('rect', { x: -12, y: -12, width: 24, height: 24, rx: 6, fill: t.color, stroke: '#000', 'stroke-width': 2.4 }, w);
   const gl = el('g', { transform: 'translate(-8.4,-8.4) scale(.7)', fill: 'none', stroke: '#fff', 'stroke-width': 2.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, w);
   gl.innerHTML = GLYPH[type] || GLYPH.note;
+}
+function markerIcon(g, type, size = 1) {
+  const w = el('g', { transform: `scale(${size})` }, g), u = iconURL(type);
+  if (u && !ICON_FAIL.has(type)) {
+    const im = el('image', { href: u, x: -15, y: -15, width: 30, height: 30, filter: 'url(#iol)', preserveAspectRatio: 'xMidYMid meet' }, w);
+    im.setAttribute('referrerpolicy', 'no-referrer');
+    im.addEventListener('error', () => { ICON_FAIL.add(type); im.remove(); glyphTile(w, type); }, { once: true });
+  } else glyphTile(w, type);
   return w;
 }
 function countBadge(g, n, dx = 11, dy = -11, rare = false) {
@@ -766,7 +810,7 @@ function renderSpawns() {
     const inner = el('g', { transform: `translate(${p0.ox || 0},${p0.oy || 0})` }, g);
     el('circle', { class: 'hit', r: 16 }, inner);
     markerIcon(inner, p0.type, p0.type === 'boss' ? 1.15 : 1);
-    if (p0.type === 'boss') el('rect', { x: -15, y: -15, width: 30, height: 30, rx: 8, fill: 'none', stroke: '#ff4d4d', 'stroke-width': 2, class: 'pulse' }, inner);
+    if (p0.type === 'boss') el('circle', { r: 16, fill: 'none', stroke: '#ff4d4d', 'stroke-width': 2.2, class: 'pulse' }, inner);
     if (arr.length > 1) countBadge(inner, arr.length, 13, -12, p0.type === 'rarechest');
     if (selected && selected.kind === 'spawn' && arr.length === 1 && selected.id === p0.id) el('circle', { r: 19, class: 'sel-ring' }, inner);
     addScaled(g, x, y);
@@ -1044,7 +1088,7 @@ function typeCount(t) {
 function rowIcon(t) {
   if (t === 'poi') return `<svg viewBox="-14 -14 28 28" width="30" height="30"><path d="M0 -11L11 0L0 11L-11 0Z" fill="#ffd60a" stroke="#000" stroke-width="2.2"/></svg>`;
   if (t === 'lm' || t === 'isle') return `<svg viewBox="-14 -14 28 28" width="30" height="30"><circle r="${t === 'lm' ? 7 : 8}" fill="${t === 'lm' ? '#fff' : '#4fe3ff'}" stroke="#000" stroke-width="2.4"/></svg>`;
-  return iconSVG(t);
+  return iconHTML(t);
 }
 function renderSidebar() {
   const sb = $('#sidebar');
@@ -1389,7 +1433,7 @@ function toolBuilder() {
 function toolInfo() {
   if (selected && selected.kind === 'spawn') {
     const s = spawnById(selected.id); if (!s) return '<div class="empty">Marker removed.</div>';
-    return `<div class="row" style="gap:12px;flex-wrap:nowrap">${iconSVG(s.type, 44)}<div style="min-width:0"><div class="eyebrow">${TYPES[s.type].label} · ${gridRef(s.x, s.y)}</div><h2>${esc(spawnLabel(s))}</h2></div></div>
+    return `<div class="row" style="gap:12px;flex-wrap:nowrap">${iconHTML(s.type, 44)}<div style="min-width:0"><div class="eyebrow">${TYPES[s.type].label} · ${gridRef(s.x, s.y)}</div><h2>${esc(spawnLabel(s))}</h2></div></div>
       <div class="field" style="margin-top:12px"><label>Label</label><input class="inp" id="slabel" value="${esc(s.label || '')}" placeholder="${esc(spawnLabel(s))}" maxlength="40"></div>
       <div class="field" style="margin-top:10px"><label>Type</label><select class="inp" id="stype">${[...SPAWN_ORDER, 'npc'].map(k => `<option value="${k}" ${s.type === k ? 'selected' : ''}>${TYPES[k].label}</option>`).join('')}</select></div>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="sroute">${ico('route')}Add to route</button><button class="btn sm" id="sdrop">${ico('target')}Drop target</button><button class="btn sm ${mode === 'move' ? 'on' : ''}" id="smove">${ico('move')}Move</button><button class="btn sm danger" id="sdel">${ico('trash')}Delete</button></div>`;
@@ -1411,7 +1455,7 @@ function toolSpawns() {
   const counts = [...SPAWN_ORDER, 'npc'].map(k => [k, SPAWNS.filter(s => s.type === k).length]).filter(([, c]) => c);
   return `<p class="muted" style="font-size:13px;margin:0 0 12px">Everything you've charted on the real map. Mark more with <b>+</b> in the filters sidebar.</p>
     <div class="grid g2"><div class="kpi gold"><div class="k">Markers</div><div class="v">${SPAWNS.length}</div></div><div class="kpi"><div class="k">Categories</div><div class="v">${counts.length}</div></div></div>
-    <div class="sec" style="margin-top:12px">${counts.length ? counts.map(([k, c]) => `<div class="crow"><span class="ic">${iconSVG(k)}</span><span class="nm">${TYPES[k].label}</span><span class="cnt">${c}</span><button class="addb" data-add2="${k}" aria-label="Add">${ico('plus', 2.8)}</button></div>`).join('') : '<div class="empty">No spawns marked yet. Open filters and tap + on a category.</div>'}</div>
+    <div class="sec" style="margin-top:12px">${counts.length ? counts.map(([k, c]) => `<div class="crow"><span class="ic">${iconHTML(k)}</span><span class="nm">${TYPES[k].label}</span><span class="cnt">${c}</span><button class="addb" data-add2="${k}" aria-label="Add">${ico('plus', 2.8)}</button></div>`).join('') : '<div class="empty">No spawns marked yet. Open filters and tap + on a category.</div>'}</div>
     <div class="row"><button class="btn sm ${mode === 'move' ? 'on' : ''}" id="msmove" ${SPAWNS.length ? '' : 'disabled'}>${ico('move')}Move markers</button><button class="btn sm" id="msexp" ${SPAWNS.length ? '' : 'disabled'}>${ico('dl')}Export</button><label class="btn sm">${ico('ul')}Import<input type="file" id="msimp" accept=".json,application/json" hidden></label><button class="btn sm danger" id="msclear" ${SPAWNS.length ? '' : 'disabled'}>${ico('trash')}Clear all</button></div>
     <p class="dim" style="font-size:12px;margin-top:10px">Export creates a JSON file you can share with your squad; importing merges markers into yours.</p>`;
 }
@@ -1511,7 +1555,7 @@ function renderHome() {
   const quiet = NODES.filter(n => n.type !== 'console' && n.chests >= 6 && n.empty != null).sort((a, b) => b.empty - a.empty).slice(0, 5);
   $('#v-home').innerHTML = `<div class="page">
     <div class="hero">
-      <div class="card hero-main" style="background-image:url('${esc(imgURL())}')"><div class="eyebrow" style="color:var(--gold)">Chapter 7 · Season 4 · Override</div><h1 style="font-size:44px;margin-top:4px">The island, mapped.</h1>
+      <div class="card hero-main" style="background-image:url('${esc(imgURL())}')"><img class="hero-logo" src="logo.svg" alt="Fortnite Dynamic Map logo"><div class="eyebrow" style="color:var(--gold)">Chapter 7 · Season 4 · Override</div><h1 style="font-size:44px;margin-top:4px">The island, mapped.</h1>
         <p>The official map with exact locations, filters for every spawn, a drop calculator timed to the second and an AI that plans your loot route.</p>
         <div class="row"><button class="btn pri" data-open="">${ico('map')}Open map</button><button class="btn" data-open="drop">${ico('drop')}Drop calculator</button><button class="btn" data-open="oracle">${ico('oracle')}Oracle AI</button></div></div>
       <div class="card"><div class="spread"><h3>Season ends</h3><span class="tag gold">1 Nov 2026</span></div><div class="count" id="count"></div>
@@ -1531,7 +1575,7 @@ function renderHome() {
       <div class="card"><h3>Quiet drops</h3><table class="t" style="margin-top:8px"><tbody>${quiet.map(n => `<tr class="click" data-fly="${n.id}"><td><b>${esc(n.name)}</b></td><td class="mono" style="text-align:right">${n.empty}%</td><td style="width:70px"><div class="bar"><i style="width:${n.empty}%"></i></div></td></tr>`).join('')}</tbody></table><div class="dim" style="font-size:12px;margin-top:6px">% of games nobody else lands</div></div>
     </div>
     <div class="sect-t"><h2>Bosses</h2></div>
-    <div class="grid g4">${NODES.filter(n => n.boss).map(n => `<button class="tile" data-fly="${n.id}"><span class="ic" style="background:#e11d48;color:#fff">${ico('crown')}</span><b>${esc(n.boss.name)}</b><span>${esc(n.name)} · ${esc(n.boss.drop)}</span></button>`).join('')}</div>
+    <div class="grid g4">${NODES.filter(n => n.boss).map(n => `<button class="tile" data-fly="${n.id}"><span class="ic" style="background:#2b0a10">${iconHTML('boss', 26)}</span><b>${esc(n.boss.name)}</b><span>${esc(n.name)} · ${esc(n.boss.drop)}</span></button>`).join('')}</div>
     <p class="dim" style="font-size:12.5px;margin-top:22px">Chest counts: Fortnite Wiki where published (others marked est.). Landing stats: Elite Esports C7S4. Map image & coordinates: fortnite-api.com. Fan-made, not affiliated with Epic Games.</p>
   </div>`;
   const v = $('#v-home');

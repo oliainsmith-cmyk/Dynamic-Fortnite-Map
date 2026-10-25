@@ -1,3 +1,5 @@
+<p align="center"><img src="logo.svg" width="96" alt="Fortnite Dynamic Map logo"></p>
+
 # Fortnite Dynamic Map
 
 Interactive map for **Fortnite Chapter 7 Season 4 "Override"** in the style of fortnite.gg — single HTML file, vanilla JS, no dependencies.
@@ -7,6 +9,7 @@ Interactive map for **Fortnite Chapter 7 Season 4 "Override"** in the style of f
 ## What it does
 - **Official map + exact locations** – the Battle Royale map image and in-game coordinates for every named location, landmark, island and Override Console come from the public [fortnite-api.com](https://fortnite-api.com) `/v1/map` endpoint, cached for offline use. When the season changes, hit Refresh and everything moves.
 - **fortnite.gg-style filters** – Locations / AI & Bosses / Spawns sections with master toggles, per-category switches and counts.
+- **Real Fortnite icons** for every category (Epic art via the Fortnite Wiki), outlined like the in-game map.
 - **25 spawn categories** – Pumpkin Chests, Chests, Rare Chests, Ammo, Vending, Mending, Cheat Codes, Vaults, Launch Pads, Cars, Reboot Vans and more. Tap **+** and mark spawns on the real map; markers cluster by zoom. Export/import to share with your squad.
 - **Draw routes** – yellow arrowed routes that snap to locations and your spawns, 2-opt optimise, 6 save slots, share links (`#r=…`).
 - **Oracle route AI** – scans every destination (including your spawns) and solves the highest-value loot path within a time budget, weighted by loot, mythics/bosses and safety, optionally finishing inside the zone.
