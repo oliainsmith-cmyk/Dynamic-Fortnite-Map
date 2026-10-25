@@ -1,18 +1,19 @@
 # Fortnite Dynamic Map
 
-Interactive tactical map for **Fortnite Chapter 7 Season 4 "Override"** (including Fortnitemares 2026 changes). Single HTML file, vanilla JS, no dependencies — open `index.html` or use the GitHub Pages link.
+Interactive map for **Fortnite Chapter 7 Season 4 "Override"** in the style of fortnite.gg — single HTML file, vanilla JS, no dependencies.
 
-## Features
-- **Map engine** – procedurally rendered island, pan / wheel / pinch zoom, A–J × 1–10 grid, search by name, boss or grid ref.
-- **11 layers** – named locations, landmarks, islands, AI bosses, NPC pins, chests, vaults, override consoles, Reboot & vending, roads, custom pins.
-- **Enhancements** – contest heatmap, loot glow, grid, labels, Fortnitemares filter, route focus, ruler (distance + run/drive time), safe-zone planner, fullscreen.
-- **Drop Calculator** – draw the bus path, pick a target: optimal jump second, jump window, glide distance, expected opponents, live countdown with audio/haptic cues, best drops for that bus.
-- **Oracle (loot-route AI)** – scans every destination and solves the highest-value route within a time budget (orienteering: randomised cheapest insertion + 2-opt + swap search), weighted by loot, mythics/bosses and safety, optional finish-inside-zone.
-- **Route Builder + 6 save slots** – snap-to-location waypoints, reorder, 2-opt optimise, rename/duplicate, share codes, import.
-- **Calibrate mode + official map import** – drop in a screenshot of the in-game map and drag markers to exact positions (saved locally).
-- Home dashboard, 4 themes, settings & physics tuning, inline data editor, JSON backup, update log. Works on phone and desktop.
+**Live:** https://oliainsmith-cmyk.github.io/Dynamic-Fortnite-Map/ (enable GitHub Pages → main / root)
+
+## What it does
+- **Official map + exact locations** – the Battle Royale map image and in-game coordinates for every named location, landmark, island and Override Console come from the public [fortnite-api.com](https://fortnite-api.com) `/v1/map` endpoint, cached for offline use. When the season changes, hit Refresh and everything moves.
+- **fortnite.gg-style filters** – Locations / AI & Bosses / Spawns sections with master toggles, per-category switches and counts.
+- **25 spawn categories** – Pumpkin Chests, Chests, Rare Chests, Ammo, Vending, Mending, Cheat Codes, Vaults, Launch Pads, Cars, Reboot Vans and more. Tap **+** and mark spawns on the real map; markers cluster by zoom. Export/import to share with your squad.
+- **Draw routes** – yellow arrowed routes that snap to locations and your spawns, 2-opt optimise, 6 save slots, share links (`#r=…`).
+- **Oracle route AI** – scans every destination (including your spawns) and solves the highest-value loot path within a time budget, weighted by loot, mythics/bosses and safety, optionally finishing inside the zone.
+- **Drop calculator** – bus path → exact jump second, jump window, glide distance, expected opponents, live countdown with audio/haptics, best drops for that bus.
+- Contest heatmap, loot glow, grid, ruler with real metres, safe-zone planner, Fortnitemares filter, intel for every location (chest counts, players/game, uncontested %, air time, bosses, vaults), home dashboard, 5 themes, settings, backup, update log. Works on phone and desktop.
 
 ## Data
-Chest/ammo/vending/Reboot counts from Fortnite Wiki figures where published (entries marked *est* are estimates). Players-per-game, uncontested % and air time from Elite Esports C7S4 landing data. **Marker positions are approximate** — use Calibrate mode to correct them.
+Map image & coordinates: fortnite-api.com. Chest/ammo/vending/Reboot counts: Fortnite Wiki where published (others marked *est*). Landing stats: Elite Esports C7S4. Spawn markers are user-charted — no third-party spawn database is bundled.
 
-Fan-made tool, not affiliated with Epic Games.
+Fan-made, not affiliated with Epic Games or fortnite.gg.
